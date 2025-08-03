@@ -11,7 +11,7 @@ function distance_to_state(state_1, state_2)
             if _value ~= state_1[key] then 
                 _score = _score + 1
             end 
-            table.insert(_scored_keys,{key = 1})
+            _scored_keys[key] = true
         end 
     end 
     
@@ -44,12 +44,19 @@ function conditions_are_met(state_1, state_2)
     return true 
 end 
 
-local function compareTable(t1,t2)
-    
-    for k1,v1 in pairs(t1) do 
-        if t1[k1] ~= t2[k1] then return false  end 
-    end 
-    return true 
+local function compareTable(t1, t2)
+    -- exact deep equality for flat tables (values are non-table in states)
+    for k, v in pairs(t1) do
+        if t2[k] ~= v then
+            return false
+        end
+    end
+    for k, v in pairs(t2) do
+        if t1[k] ~= v then
+            return false
+        end
+    end
+    return true
 end 
 
 function node_in_list(node,node_list)
@@ -162,14 +169,16 @@ function  walk_path(path)
             local _g_cost = node['g'] + path['weight_table'][next_node['name']]
             local  _in_olist, _in_clist = node_in_list(next_node, _olist), node_in_list(next_node, _clist)
             if _in_olist and _g_cost < next_node["g"] then 
-                table.remove(_olist,next_node)
+                -- remove outdated entry and allow reinsertion with better g
+                _olist[next_node["id"]] = nil
             end 
 
             if _in_clist and _g_cost < next_node["g"] then 
-                _clist [ next_node["id"] ] = nil  
+                -- re-open the node if a better path is found
+                _clist[next_node["id"]] = nil
             end 
 
-            if not _in_olist and not _in_clist then 
+            if (not node_in_list(next_node, _olist)) and (not node_in_list(next_node, _clist)) then 
                 next_node['g'] = _g_cost
                 next_node['h'] = distance_to_state(next_node['state'], path['goal'])
                 next_node['f'] = next_node['g'] + next_node['h']

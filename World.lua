@@ -33,7 +33,12 @@ function World:get_plan(debug)
 	end 
 	if  debug then 
 		local  i = 1
-		for plan_score,plans in pairs(_plans) do 
+        -- stable, sorted iteration by plan_score
+        local keys = {}
+        for k in pairs(_plans) do table.insert(keys, k) end
+        table.sort(keys, function(a,b) return a < b end)
+		for _, plan_score in ipairs(keys) do
+            local plans = _plans[plan_score]
 			for _,plan in pairs(plans) do 
 				print(i)
 				for _,v in plan do 
@@ -44,9 +49,17 @@ function World:get_plan(debug)
 			end 
 		end 
 	end 
-	for _,v in pairs(_plans) do 
-		return v 
-	end 
+    -- return the plan(s) with minimal cost deterministically
+    local min_key = nil
+    for k in pairs(_plans) do
+        if min_key == nil or k < min_key then
+            min_key = k
+        end
+    end
+    if min_key ~= nil then
+        return _plans[min_key]
+    end
+    return nil
 end
 
 return World
