@@ -100,8 +100,6 @@ local function heuristic_value(strategy, node_state, goal_mask, ctx)
         if mismatches == 0 then return 0 end
         local max_fixes = ctx.max_fixes_per_action or 1
         local actions_required = math.ceil(mismatches / math.max(1, max_fixes))
-        -- For varied weights, you may multiply by ctx.min_weight for admissibility:
-        -- return actions_required * (ctx.min_weight or 1)
         return actions_required
     else
         return 0
@@ -119,7 +117,6 @@ local function reverse(t)
 end
 
 local function successor_is_noop(current_state, reaction)
-    -- Reactions have been validated to not contain -1
     for key, rv in pairs(reaction) do
         if current_state[key] ~= rv then
             return false
@@ -202,7 +199,6 @@ local function heap_down(h, i)
 end
 
 function OpenHeap:push(node)
-    -- node must have _sk set
     local i = #self.data + 1
     self.data[i] = node
     self.pos[node._sk] = i
@@ -225,7 +221,6 @@ function OpenHeap:pop_min()
 end
 
 function OpenHeap:update(node)
-    -- node must already be in heap
     local i = self.pos[node._sk]
     if not i then return end
     heap_up(self, i)
@@ -317,10 +312,22 @@ local function expand_neighbors(node, path)
 end
 
 -- Public
-function Goap.astar(start_state, goal_state, actions, reactions, weight_table, heuristic_strategy, heuristic_params)
+-- Added optional 'options' table with fields:
+-- options.max_expansions (integer), options.time_budget_ms (number)
+function Goap.astar(start_state, goal_state, actions, reactions, weight_table, heuristic_strategy, heuristic_params, options)
     -- 1. Early exit if start already meets goal
     if Goap.conditions_are_met(start_state, goal_state) then
         return {}
+    end
+
+    options = options or {}
+    local max_expansions = options.max_expansions
+    local time_budget_ms = options.time_budget_ms
+    local start_clock = time_budget_ms and os.clock() or nil
+    local function time_exceeded()
+        if not time_budget_ms then return false end
+        local elapsed_s = os.clock() - start_clock
+        return (elapsed_s * 1000.0) >= time_budget_ms
     end
 
     local _path = {
@@ -335,7 +342,8 @@ function Goap.astar(start_state, goal_state, actions, reactions, weight_table, h
         clist =  {}, -- closed: state_key -> node
         heuristic_strategy = heuristic_strategy or "mismatch",
         heuristic_ctx = {},
-        sorted_action_names = {}
+        sorted_action_names = {},
+        expansions = 0
     }
 
     -- Precompute heuristic context if needed
@@ -374,10 +382,21 @@ function Goap.astar(start_state, goal_state, actions, reactions, weight_table, h
             return {}
         end
 
+        -- Limits: time and expansions
+        if time_exceeded() then
+            return {}
+        end
+        if max_expansions and _path.expansions >= max_expansions then
+            return {}
+        end
+
         -- Extract node with lowest f from open (deterministic tie-break)
         local node = _path.open:pop_min()
         if not node then return {} end
         local sk = node._sk
+
+        -- One expansion counted when we pop and process this node
+        _path.expansions = _path.expansions + 1
 
         -- Goal test
         if Goap.conditions_are_met(node.state, _path.goal) then
