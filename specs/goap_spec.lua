@@ -1,40 +1,34 @@
-local Goap = require("Goap") -- ensure file loaded for global functions
+local Goap = require("Goap") -- module table
 
 describe("Goap", function()
   it("distance_to_state handles equal states as 0", function()
     local s1 = { a = true, b = false }
     local s2 = { a = true, b = false }
-    assert.equals(0, distance_to_state(s1, s2))
+    assert.equals(0, Goap.distance_to_state(s1, s2))
   end)
 
   it("distance_to_state counts differences and ignores -1 in goal", function()
     local s1 = { a = true, b = false, c = true }
     local s2 = { a = false, b = -1 } -- b ignored
-    assert.equals(1, distance_to_state(s1, s2))
+    assert.equals(1, Goap.distance_to_state(s1, s2))
   end)
 
   it("distance_to_state handles asymmetric keys", function()
     local s1 = { a = true }
     local s2 = { a = false, b = true }
-    -- a differs => 1; b in s2 vs s1[b]=nil => differs => +1 (since not -1)
-    assert.equals(2, distance_to_state(s1, s2))
+    assert.equals(2, Goap.distance_to_state(s1, s2))
   end)
 
   it("conditions_are_met respects -1 wildcard", function()
     local s = { a = true, b = false }
     local cond = { a = -1, b = false }
-    assert.is_true(conditions_are_met(s, cond))
+    assert.is_true(Goap.conditions_are_met(s, cond))
   end)
 
-  it("node_in_list compares name and exact state", function()
-    local n = { name = "eat", state = { x=true, y=false } }
-    local list = {
-      [1] = { name = "eat", state = { x=true, y=false } },
-      [2] = { name = "eat", state = { x=false } }
-    }
-    assert.is_true(node_in_list(n, list))
-    local n2 = { name = "eat", state = { x=true, y=true } }
-    assert.is_false(node_in_list(n2, list))
+  it("state_key is stable and canonical", function()
+    local s = { b=false, a=true }
+    local s2 = { a=true, b=false }
+    assert.equals(Goap.state_key(s), Goap.state_key(s2))
   end)
 
   it("astar finds a path and applies reactions", function()
@@ -50,15 +44,13 @@ describe("Goap", function()
     }
     local weights = { cook = 1, eat = 1 }
 
-    local path = astar(start, goal, actions, reactions, weights)
-    -- Expect two steps: cook then eat
+    local path = Goap.astar(start, goal, actions, reactions, weights)
     assert.is_true(#path >= 1)
     local names = {}
     for i, n in ipairs(path) do names[i] = n.name end
     assert.same({ "cook", "eat" }, names)
-    -- final node state equals goal on checked keys
     local last = path[#path]
-    assert.is_true(conditions_are_met(last.state, goal))
+    assert.is_true(Goap.conditions_are_met(last.state, goal))
   end)
 
   it("astar prefers cheaper path based on weights", function()
@@ -76,7 +68,7 @@ describe("Goap", function()
     }
     local weights = { step1 = 1, step2 = 1, heavy = 100 }
 
-    local path = astar(start, goal, actions, reactions, weights)
+    local path = Goap.astar(start, goal, actions, reactions, weights)
     local names = {}
     for i, n in ipairs(path) do names[i] = n.name end
     assert.same({ "step1", "step2" }, names)
@@ -92,7 +84,7 @@ describe("Goap", function()
       x = { a = true } -- no progress to z
     }
     local weights = { x = 1 }
-    local path = astar(start, goal, actions, reactions, weights)
+    local path = Goap.astar(start, goal, actions, reactions, weights)
     assert.same({}, path)
   end)
 end)

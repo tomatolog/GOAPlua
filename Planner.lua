@@ -1,6 +1,6 @@
 local class = require('pl.class')
 local deepcopy = require('pl.tablex').deepcopy
-require("Goap")
+local Goap = require("Goap")
 
 local Planner = class()
 local function  update(t1,t2)
@@ -17,9 +17,8 @@ function  Planner:_init(...)
         self.values[v] = -1
     end
     self.action_list = nil
-    -- New: heuristic config
-    self.heuristic_strategy = "mismatch"  -- options: "zero", "mismatch", "domain_aware"
-    self.heuristic_params = nil           -- optional table for strategy-specific params
+    self.heuristic_strategy = "mismatch"
+    self.heuristic_params = nil
 end
 
 function Planner:set_heuristic(strategy, params)
@@ -56,7 +55,7 @@ function Planner:set_action_list(action_list)
 end
 
 function Planner:calculate()
-     return astar(
+     return Goap.astar(
          self.start_state,
          self.goal_state,
          deepcopy(self.action_list.conditions),
