@@ -1,3 +1,158 @@
+Below are focused, minimal changes to make planning deterministic:
+
+Goals implemented
+- Iterate actions in a deterministic, sorted order.
+- Choose the open node deterministically with tie-breaking by (f, g, name).
+- Ensure names are always strings to make tie-break stable.
+
+Patch
+
+File: Goap.lua
+- Add a cached, sorted action name array on path.
+- Replace action iteration with a sorted loop.
+- Update lowest_f_in_open to break ties by (f, g, name).
+- Ensure node names are strings when created/updated.
+
+Replace or update the indicated parts:
+
+1) Build and store sorted action names when initializing the path:
+
+In Goap.astar, after creating action_nodes:
+```lua
+    -- Cache action condition nodes for applicability checks
+    for k,v in pairs(actions) do
+        _path.action_nodes[k] = create_node(_path, deepcopy(v), k)
+    end
+
+    -- Deterministic action order: sorted action names
+    _path.sorted_action_names = {}
+    for name, _ in pairs(_path.action_nodes) do
+        table.insert(_path.sorted_action_names, name)
+    end
+    table.sort(_path.sorted_action_names, function(a,b) return a < b end)
+```
+
+2) Deterministic lowest-f selection with tie-breaking (f, g, name):
+
+Replace lowest_f_in_open with:
+```lua
+local function lowest_f_in_open(olist)
+    local best_key, best_node
+    for sk, node in pairs(olist) do
+        if not best_node then
+            best_key, best_node = sk, node
+        else
+            if node.f < best_node.f then
+                best_key, best_node = sk, node
+            elseif node.f == best_node.f then
+                -- tie-break by g (prefer lower g), then by name (lexicographically)
+                if node.g < best_node.g then
+                    best_key, best_node = sk, node
+                elseif node.g == best_node.g then
+                    local n1 = tostring(node.name or "")
+                    local n2 = tostring(best_node.name or "")
+                    if n1 < n2 then
+                        best_key, best_node = sk, node
+                    end
+                end
+            end
+        end
+    end
+    return best_key, best_node
+end
+```
+
+3) Use sorted action iteration in neighbor expansion:
+
+Replace expand_neighbors with:
+```lua
+local function expand_neighbors(node, path)
+    for _, action_name in ipairs(path.sorted_action_names or {}) do
+        expand_action(node, action_name, path)
+    end
+end
+```
+
+4) Ensure node names are strings consistently (helps deterministic tie-break):
+
+In create_node (already sets name or ""), keep as is.
+
+In upsert_open_node, ensure name string:
+```lua
+    nn.name = tostring(action_name or "")
+```
+
+In astar when creating the start node, set a stable start name:
+```lua
+    local _start_node = create_node(_path, deepcopy(start_state), 'start')
+```
+(You already do this; it’s stable.)
+
+Full snippets to paste
+
+a) Replace lowest_f_in_open:
+```lua
+local function lowest_f_in_open(olist)
+    local best_key, best_node
+    for sk, node in pairs(olist) do
+        if not best_node then
+            best_key, best_node = sk, node
+        else
+            if node.f < best_node.f then
+                best_key, best_node = sk, node
+            elseif node.f == best_node.f then
+                if node.g < best_node.g then
+                    best_key, best_node = sk, node
+                elseif node.g == best_node.g then
+                    local n1 = tostring(node.name or "")
+                    local n2 = tostring(best_node.name or "")
+                    if n1 < n2 then
+                        best_key, best_node = sk, node
+                    end
+                end
+            end
+        end
+    end
+    return best_key, best_node
+end
+```
+
+b) Replace expand_neighbors:
+```lua
+local function expand_neighbors(node, path)
+    for _, action_name in ipairs(path.sorted_action_names or {}) do
+        expand_action(node, action_name, path)
+    end
+end
+```
+
+c) In Goap.astar, after you fill _path.action_nodes, insert:
+```lua
+    _path.sorted_action_names = {}
+    for name, _ in pairs(_path.action_nodes) do
+        table.insert(_path.sorted_action_names, name)
+    end
+    table.sort(_path.sorted_action_names, function(a,b) return a < b end)
+```
+
+d) In upsert_open_node, set a string name:
+```lua
+    nn.name = tostring(action_name or "")
+```
+
+Why this satisfies the spec
+- Action iteration is strictly over a sorted array `_path.sorted_action_names`.
+- Node selection is deterministic with tie-breaking across f, then g, then name.
+- With the above, when multiple paths have equal cost/heuristic, expansion and selection order is reproducible across runs.
+
+Testing guidance
+- Add a spec where multiple actions are applicable with identical weights and effects toward the goal, and assert the returned action sequence matches the lexicographic order by action name.
+- Run tests multiple times; sequences should be identical.
+
+Here are the final files with the requested changes applied.
+
+File: Goap.lua
+--------------------------------
 local deepcopy = require('pl.tablex').deepcopy
 
 local Goap = {}
@@ -311,3 +466,96 @@ Goap._helpers = {
 }
 
 return Goap
+
+
+File: Planner.lua
+--------------------------------
+local class = require('pl.class')
+local deepcopy = require('pl.tablex').deepcopy
+local Goap = require("Goap")
+
+local Planner = class()
+local function  update(t1,t2)
+    for k,v in pairs(t2) do
+        t1[k] = v
+    end
+end
+
+function  Planner:_init(...)
+    self.start_state = nil
+    self.goal_state = nil
+    self.values = {}
+    for _,v in pairs({...}) do
+        self.values[v] = -1
+    end
+    self.action_list = nil
+    self.heuristic_strategy = "mismatch"
+    self.heuristic_params = nil
+end
+
+function Planner:set_heuristic(strategy, params)
+    self.heuristic_strategy = strategy or "mismatch"
+    self.heuristic_params = params
+end
+
+function Planner:state(kwargs)
+    local _new_state = deepcopy(self.values)
+    update(_new_state,kwargs)
+    return _new_state
+end
+
+function Planner:set_start_state(kwargs)
+    for k,_ in pairs(kwargs) do
+        if self.values[k] == nil then
+            error("Invalid states for world start state: "..k)
+        end
+    end
+    self.start_state = self:state(kwargs)
+end
+
+function  Planner:set_goal_state(kwargs)
+    for k,_ in pairs(kwargs) do
+        if self.values[k] == nil then
+            error("Invalid states for world goal state: "..k)
+        end
+    end
+    self.goal_state = self:state(kwargs)
+end
+
+function Planner:set_action_list(action_list)
+    self.action_list = action_list
+end
+
+-- New: validate that each action has an explicit, positive numeric weight
+local function validate_weights(action_list)
+    if not action_list or not action_list.conditions then
+        error("No actions provided to planner")
+    end
+    local weights = action_list.weights or {}
+    for action_name, _ in pairs(action_list.conditions) do
+        local w = weights[action_name]
+        if w == nil then
+            error("Missing weight for action '"..tostring(action_name).."'")
+        end
+        if type(w) ~= "number" or w <= 0 or w ~= w then -- includes NaN check
+            error("Invalid weight for action '"..tostring(action_name).."': expected positive number, got "..tostring(w))
+        end
+    end
+end
+
+function Planner:calculate()
+     -- Validate weights before planning
+     validate_weights(self.action_list)
+
+     return Goap.astar(
+         self.start_state,
+         self.goal_state,
+         deepcopy(self.action_list.conditions),
+         deepcopy(self.action_list.reactions),
+         deepcopy(self.action_list.weights),
+         self.heuristic_strategy,
+         self.heuristic_params
+     )
+end
+
+return Planner
