@@ -1,3 +1,17 @@
+Below are focused changes to enforce explicit, positive weights for every action and fail fast if any are missing or invalid.
+
+What changes
+- Add a validation step in Planner before calling Goap.astar.
+- Validation checks:
+  - Each action key present in `action_list.conditions` must have a weight entry in `action_list.weights`.
+  - Each weight must be a number > 0 (no zeros, no negatives, no non-numbers).
+- Keep API unchanged; error messages are descriptive.
+
+Patch
+
+File: `Planner.lua` (only the relevant additions shown; rest unchanged)
+
+```lua
 local class = require('pl.class')
 local deepcopy = require('pl.tablex').deepcopy
 local Goap = require("Goap")
@@ -87,3 +101,14 @@ function Planner:calculate()
 end
 
 return Planner
+```
+
+Testing guidance
+- Success case: In your example, you already set some weights explicitly. Ensure all actions have weights. For actions without `set_weight`, add them, for example:
+  - `actions:set_weight('cook', 1)`, `actions:set_weight('eat', 1)`, etc.
+- Failure cases to add in specs:
+  - Missing weight for an action present in `conditions` should error with “Missing weight for action '...'”.
+  - Weight 0, negative, non-number (e.g., string), or NaN should error with “Invalid weight for action '...': expected positive number, got ...”.
+
+Optional conveniences
+- If you want to keep a development mode where unspecified weights default to 1, you can add a flag on `Planner` like `allow_default_weight = false`, and only enforce strict validation when it’s false. The current spec asks for strict validation, so the code above enforces it unconditionally.
