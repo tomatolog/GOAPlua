@@ -1,3 +1,28 @@
+Below is a minimal, self-contained set of changes to implement the two requested improvements:
+
+1) Heuristic admissibility/consistency with a configuration flag.
+2) Skipping no-op actions during neighbor generation.
+
+Notes:
+- I kept the existing API and behavior as default: the heuristic remains the existing “mismatch count” unless you choose one of the new strategies.
+- Added a `heuristic_strategy` and optional `heuristic_params` to `Planner`, passed through to `astar`.
+- Implemented three strategies:
+  - "zero": always 0 (Dijkstra) — admissible and consistent.
+  - "mismatch": current behavior — number of mismatched keys in goal (kept for backward compatibility; can be inadmissible in some domains).
+  - "domain_aware": mismatches divided by a computed upper bound on how many mismatches a single action can fix, then ceiling. This is admissible if action costs are uniform; with varied weights, combine with "zero" to guarantee optimality. For varied weights, you can also use mismatch divided by max fixes as a lower bound on action count, then multiply by min action weight; see the note in code comments for an optional tweak.
+
+- Added no-op filtering during neighbor generation.
+
+Files to update:
+
+File: /Goap.lua
+- Add heuristic choice.
+- Add domain-aware estimator helpers.
+- Skip no-op successors.
+
+Replace the content of Goap.lua with the following:
+
+```lua
 local deepcopy = require('pl.tablex').deepcopy
 
 -- Basic mismatch count between a state and goal mask
@@ -259,3 +284,102 @@ function walk_path(path)
     end -- while
     return {}
 end
+```
+
+File: /Planner.lua
+- Add heuristic configuration and pass to `astar`.
+
+Replace the `Planner` class definition with this updated version (only diffs shown; rest unchanged):
+
+```lua
+local class = require('pl.class')
+local deepcopy = require('pl.tablex').deepcopy
+require("Goap")
+
+local Planner = class()
+local function  update(t1,t2)
+    for k,v in pairs(t2) do
+        t1[k] = v
+    end
+end
+
+function  Planner:_init(...)
+    self.start_state = nil
+    self.goal_state = nil
+    self.values = {}
+    for _,v in pairs({...}) do
+        self.values[v] = -1
+    end
+    self.action_list = nil
+    -- New: heuristic config
+    self.heuristic_strategy = "mismatch"  -- options: "zero", "mismatch", "domain_aware"
+    self.heuristic_params = nil           -- optional table for strategy-specific params
+end
+
+function Planner:set_heuristic(strategy, params)
+    self.heuristic_strategy = strategy or "mismatch"
+    self.heuristic_params = params
+end
+
+function Planner:state(kwargs)
+    local _new_state = deepcopy(self.values)
+    update(_new_state,kwargs)
+    return _new_state
+end
+
+function Planner:set_start_state(kwargs)
+    for k,_ in pairs(kwargs) do
+        if self.values[k] == nil then
+            error("Invalid states for world start state: "..k)
+        end
+    end
+    self.start_state = self:state(kwargs)
+end
+
+function  Planner:set_goal_state(kwargs)
+    for k,_ in pairs(kwargs) do
+        if self.values[k] == nil then
+            error("Invalid states for world goal state: "..k)
+        end
+    end
+    self.goal_state = self:state(kwargs)
+end
+
+function Planner:set_action_list(action_list)
+    self.action_list = action_list
+end
+
+function Planner:calculate()
+     return astar(
+         self.start_state,
+         self.goal_state,
+         deepcopy(self.action_list.conditions),
+         deepcopy(self.action_list.reactions),
+         deepcopy(self.action_list.weights),
+         self.heuristic_strategy,
+         self.heuristic_params
+     )
+end
+
+return Planner
+```
+
+How to use:
+
+- Default behavior remains unchanged: mismatch-count heuristic.
+- To guarantee optimality with varied weights, set the heuristic to zero:
+  - In `example_goap.lua`, after creating the planner:
+    `world:set_heuristic("zero")` if you were using `Planner` directly. In your current example you name the planner `world`, but it’s actually a `Planner` instance.
+- To use the domain-aware heuristic:
+  - `planner:set_heuristic("domain_aware")`
+  - This is admissible if action costs are uniform. If you have varied weights and still want admissibility, change the line in `heuristic_value` to multiply by `ctx.min_weight` (commented in code).
+
+No-op acceptance criteria:
+
+- Neighbor generation now calls `successor_is_noop` and skips creating successors that would not change any key. This ensures no-ops aren’t expanded and reduces loops/branching.
+
+Optional unit-test ideas (not code, just brief):
+
+- Add an action whose reaction is `{}` or sets all keys to current values; assert it never appears in the returned plan.
+- Create a scenario where an action fixes two goal keys at once. With "mismatch", the heuristic might overestimate; with "zero" or "domain_aware", ensure optimal plan is returned.
+- With varied weights, enable "zero" and confirm cheapest-cost plan is chosen.
