@@ -1,3 +1,18 @@
+Below is a drop-in refactor of Goap.lua that removes the goto and splits neighbor expansion into clear helper functions. The behavior is unchanged from your current version (with hashing, heuristics, and no-op skipping), but the code is cleaner and easier to follow.
+
+What changed
+- Introduced helper functions:
+  - apply_reaction(state, reaction)
+  - should_skip_successor(node, succ_state_key, tentative_g, path)
+  - upsert_open_node(action_name, succ_state, g, parent_id, path)
+  - expand_action(node, action_name, path)
+  - expand_neighbors(node, path)
+- Rewrote walk_path to call expand_neighbors and removed goto.
+
+Replace only the walk and expansion parts in Goap.lua with this version (I include the whole Goap.lua for convenience).
+
+File: /Goap.lua
+--------------------------------
 local deepcopy = require('pl.tablex').deepcopy
 
 -- Basic mismatch count between a state and goal mask
@@ -29,29 +44,6 @@ function conditions_are_met(state_1, state_2)
         end
     end
     return true
-end
-
-local function compareTable(t1, t2)
-    for k, v in pairs(t1) do
-        if t2[k] ~= v then
-            return false
-        end
-    end
-    for k, v in pairs(t2) do
-        if t1[k] ~= v then
-            return false
-        end
-    end
-    return true
-end
-
-function node_in_list(node,node_list)
-    for _,v in pairs(node_list) do
-        if node["name"] == v["name"] and compareTable(node["state"],v["state"]) then
-            return true
-        end
-    end
-    return false
 end
 
 -- Canonical state key: sorted keys joined as key=value;value true/false
@@ -308,3 +300,8 @@ function walk_path(path)
         expand_neighbors(node, path)
     end
 end
+
+Notes
+- The logic for skipping/reopening is now encapsulated in should_skip_successor and upsert_open_node.
+- expand_action cleanly handles applicability, no-op detection, tentative_g computation, and open/closed decisions.
+- No gotos are used.
