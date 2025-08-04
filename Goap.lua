@@ -1,32 +1,15 @@
+local deepcopy = require('pl.tablex').deepcopy
 
 function distance_to_state(state_1, state_2) 
-    local _scored_keys = {} 
     local _score = 0
-    for key,_ in pairs(state_2) do 
+    for key, _ in pairs(state_2) do
         local _value = state_2[key]
-        
-        if _value == -1 then 
-        
-        else 
-            if _value ~= state_1[key] then 
+        if _value ~= -1 then
+            if state_1[key] ~= _value then
                 _score = _score + 1
-            end 
-            _scored_keys[key] = true
-        end 
-    end 
-    
-    for key,v in pairs(state_1) do 
-        if _scored_keys[key] ~= nil then 
-        
-        else 
-            local _value = state_1[key]
-            if _value ~= -1 then 
-                if _value ~= state_2[key] then 
-                    _score = _score + 1
-                end 
-            end 
-        end 
-    end 
+            end
+        end
+    end
     return _score
 end 
 
@@ -72,7 +55,7 @@ end
 function  create_node(path,state,name)
     path["node_id"] = path["node_id"] + 1
     path["nodes"][ path["node_id"] ] = {state = state, f =  0, g =  0, h =  0, p_id =  nil, id =  path['node_id'], name = name or ""}
-    return copyTable(path["nodes"][ path["node_id"] ])
+    return deepcopy(path["nodes"][ path["node_id"] ])
 end
 
 function astar(start_state, goal_state, actions, reactions, weight_table)
@@ -92,9 +75,9 @@ function astar(start_state, goal_state, actions, reactions, weight_table)
     _start_node['h'] = distance_to_state(start_state, goal_state)
     _start_node['f'] = _start_node['g'] + _start_node['h']
     
-    _path['olist'][ _start_node['id'] ] = copyTable(_start_node)
+    _path['olist'][ _start_node['id'] ] = deepcopy(_start_node)
     for k,v in pairs(actions) do 
-        _path['action_nodes'][k] = create_node(_path, copyTable(v), k)
+        _path['action_nodes'][k] = create_node(_path, deepcopy(v), k)
     end 
     
     return walk_path(_path)
@@ -149,7 +132,7 @@ function  walk_path(path)
         for action_name,_ in pairs(path['action_nodes']) do 
             if conditions_are_met(node['state'], path['action_nodes'][action_name]['state']) then 
                 path['node_id']  =  path["node_id" ] + 1
-                local _c_node = copyTable(node)
+                local _c_node = deepcopy(node)
                 _c_node["id"] = path["node_id"]
                 _c_node["name"] = action_name
 

@@ -1,12 +1,14 @@
+require("bootstrap") -- set paths
+require("deps") -- uncomment if you vendor 'pl' and want a fallback
 
 local World = require("World")
 local Planner = require("Planner")
 local Action = require("Action")
-local world = Planner.new('hungry', 'has_food', 'in_kitchen', 'tired', 'in_bed')
+local world = Planner('hungry', 'has_food', 'in_kitchen', 'tired', 'in_bed')
 world:set_start_state({hungry=true, has_food=false, in_kitchen=false, tired=true, in_bed=false})
 --world:set_goal_state({tired=false})
 world:set_goal_state({tired=false,has_food=true})
-local actions = Action.new()
+local actions = Action()
 actions:add_condition('eat', {hungry=true, has_food=true, in_kitchen=false})
 --actions:add_reaction('eat', {hungry=false})
 actions:add_reaction('eat', {hungry=false,has_food=false})

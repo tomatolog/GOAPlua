@@ -1,5 +1,7 @@
-require("class")
+local class = require('pl.class')
+local deepcopy = require('pl.tablex').deepcopy
 require("Goap")
+
 local Planner = class()
 local function  update(t1,t2)
     -- body
@@ -8,7 +10,7 @@ local function  update(t1,t2)
     end 
 end
 
-function  Planner:ctor(...)
+function  Planner:_init(...)
     -- body
     self.start_state = nil 
     self.goal_state = nil 
@@ -21,7 +23,7 @@ end
 
 function Planner:state(kwargs)
     -- body
-    local _new_state = copyTable(self.values)
+    local _new_state = deepcopy(self.values)
     update(_new_state,kwargs)
     return _new_state
 end
@@ -55,11 +57,11 @@ end
 
 function Planner:calculate()
     -- body
-    return astar(self.start_state,
-        self.goal_state,
-        copyTable(self.action_list.conditions),
-        copyTable(self.action_list.reactions),
-        copyTable(self.action_list.weights))
+     return astar(self.start_state,
+         self.goal_state,
+         deepcopy(self.action_list.conditions),
+         deepcopy(self.action_list.reactions),
+         deepcopy(self.action_list.weights))
 end
 
 

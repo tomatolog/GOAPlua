@@ -1,4 +1,3 @@
-require("class")
 local Goap = require("Goap") -- ensure file loaded for global functions
 
 describe("Goap", function()

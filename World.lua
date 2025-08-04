@@ -1,7 +1,7 @@
-require("class")
+local class = require('pl.class')
 local World = class()
 
-function World:ctor()
+function World:_init()
 	self.planners = {}
 	self.plans = {}
 end 
@@ -13,7 +13,7 @@ end
 function World:calculate()
 	self.plans = {}
 	for _,v in pairs(self.planners) do 
-		table.insert(self.plans,v.calculate())
+		table.insert(self.plans,v:calculate())
 	end 
 end 
 local function sum(plan)
@@ -41,7 +41,7 @@ function World:get_plan(debug)
             local plans = _plans[plan_score]
 			for _,plan in pairs(plans) do 
 				print(i)
-				for _,v in plan do 
+				for _,v in pairs(plan) do 
 					print("\t",v["name"])
 				end 
 				i = i + 1

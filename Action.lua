@@ -1,6 +1,6 @@
-require("class")
+local class = require('pl.class')
 local Action = class()
-function Action:ctor()
+function Action:_init()
     self.conditions = {}
     self.reactions = {}
     self.weights = {}
