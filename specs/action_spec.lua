@@ -1,15 +1,16 @@
 local Action = require("Action")
 
 describe("Action", function()
-  it("adds conditions and reactions and sets default weights", function()
-    local actions = Action()
-    actions:add_condition("eat", { hungry = true, has_food = true })
-    actions:add_reaction("eat", { hungry = false })
-
-    assert.is_true(actions.conditions.eat.hungry)
-    assert.is_true(actions.conditions.eat.has_food)
-    assert.is_true(actions.reactions.eat.hungry == false)
-    assert.equals(1, actions.weights.eat)
+  it("adds conditions and reactions; weight must be set explicitly", function()
+  local actions = Action()
+  actions:add_condition("eat", { hungry = true, has_food = true })
+  actions:add_reaction("eat", { hungry = false })
+  
+  assert.is_true(actions.conditions.eat.hungry)
+  assert.is_true(actions.conditions.eat.has_food)
+  assert.is_true(actions.reactions.eat.hungry == false)
+  -- Weight is not auto-set anymore
+  assert.is_nil(actions.weights.eat)
   end)
 
   it("merges multiple conditions/reactions for the same action", function()
@@ -45,4 +46,19 @@ describe("Action", function()
     actions:set_weight("walk", 5)
     assert.equals(5, actions.weights.walk)
   end)
+  
+  it("errors when adding a reaction with -1 value", function()
+    local actions = Action()
+    actions:add_condition("bad", { a = true })
+    
+    local ok, err = pcall(function()
+      actions:add_reaction("bad", { a = -1 })
+    end)
+    
+    assert.is_false(ok)
+    err = tostring(err)
+    -- Match substring anywhere to be robust to Busted's filename:line prefixes
+    assert.is_truthy(err:match("Invalid reaction value %-1 for action 'bad'"))
+  end)
+   
 end)

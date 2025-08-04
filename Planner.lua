@@ -74,7 +74,7 @@ local function validate_actions_and_weights(action_list)
             error("Missing weight for action '"..tostring(action_name).."'")
         end
         if type(w) ~= "number" or w <= 0 or w ~= w then -- includes NaN check
-            error("Invalid weight for action '"..tostring(action_name).."': expected positive number, got "..tostring(w))
+            error("Invalid weight for action '"..tostring(action_name).."'")
         end
     end
 end

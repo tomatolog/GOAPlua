@@ -30,6 +30,12 @@ actions:add_condition("sleep_up",{in_bed=true})
 actions:add_reaction("sleep_up",{in_bed=false,hungry=true})
 actions:set_weight('go_to_kitchen', 2)
 actions:set_weight('order_pizza', 20)
+actions:set_weight('eat', 1)
+actions:set_weight('cook', 1)
+actions:set_weight('sleep', 1)
+actions:set_weight('go_to_bed', 1)
+actions:set_weight('leave_kitchen', 1)
+actions:set_weight('sleep_up', 1)
 
 world:set_action_list(actions)
 

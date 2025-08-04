@@ -12,10 +12,6 @@ local function  update(t1,t2)
 end
 
 function Action:add_condition(key, conditions)
-    if not self.weights[key] then
-        self.weights[key] = 1
-    end
-
     if not self.conditions[key] then
         self.conditions[key] = conditions
         return

@@ -87,4 +87,59 @@ describe("Goap", function()
     local path = Goap.astar(start, goal, actions, reactions, weights)
     assert.same({}, path)
   end)
+  
+ it("expands actions in deterministic name order when costs tie", function()
+ 
+   local start = { a = true }
+   local goal  = { z = true }
+   local actions = {
+     b_action = { a = true },
+     a_action = { a = true },
+   }
+   local reactions = {
+     b_action = { z = true },
+     a_action = { z = true },
+   }
+   local weights = { b_action = 1, a_action = 1 }
+ 
+   local path = Goap.astar(start, goal, actions, reactions, weights)
+   -- Single-step plan; tie should break by action name => a_action first selected
+   assert.equals(1, #path)
+   assert.equals("a_action", path[1].name)
+ end)  
+
+ it("returns empty plan if start already satisfies goal", function()
+   local start = { a = true, b = false }
+   local goal  = { a = true } -- satisfied
+   local actions = { x = { a = true } }
+   local reactions = { x = { b = true } }
+   local weights = { x = 1 }
+ 
+   local path = Goap.astar(start, goal, actions, reactions, weights)
+   assert.same({}, path)
+ end)
+
+ it("breaks ties in open set deterministically by name", function()
+   local start = { s=true }
+   local goal  = { g=true }
+   local actions = {
+     a = { s=true },
+     b = { s=true },
+     to_goal = { x=true }
+   }
+   local reactions = {
+     a = { x=true },     -- creates x
+     b = { x=true },     -- also creates x (same cost)
+     to_goal = { g=true }
+   }
+   local weights = { a=1, b=1, to_goal=1 }
+   -- Both a and b produce same successor state by key; due to hashing, only one state will exist in open.
+   -- But name tie-break will influence which parent is chosen if costs tie.
+   local path = Goap.astar(start, goal, actions, reactions, weights)
+   local names = {}
+   for i,n in ipairs(path) do names[i] = n.name end
+   -- Expect a then to_goal
+   assert.same({ "a", "to_goal" }, names)
+ end)
+  
 end)
