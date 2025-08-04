@@ -141,5 +141,15 @@ describe("Goap", function()
    -- Expect a then to_goal
    assert.same({ "a", "to_goal" }, names)
  end)
+
+ it("skips no-op actions and returns empty when they are the only options", function()
+   local start = { a = true }
+   local goal  = { b = true }
+   local actions = { noop = { a = true } }
+   local reactions = { noop = { a = true } } -- no change
+   local weights = { noop = 1 }
+   local path = Goap.astar(start, goal, actions, reactions, weights)
+   assert.same({}, path)
+ end)
   
 end)

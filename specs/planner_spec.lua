@@ -109,5 +109,32 @@ describe("Planner", function()
    p:set_action_list(act)
    assert.has_error(function() p:calculate() end, "Missing reaction for action 'go'")
  end)
+
+ it("finds optimal plan with zero heuristic under varied weights", function()
+   local p = Planner("s", "t", "u")
+   p:set_start_state({ s = true, t = false, u = false })
+   p:set_goal_state({ u = true })
+ 
+   local act = Action()
+   act:add_condition("cheap_chain1", { s = true })
+   act:add_reaction("cheap_chain1", { t = true })
+   act:set_weight("cheap_chain1", 1)
+ 
+   act:add_condition("cheap_chain2", { t = true })
+   act:add_reaction("cheap_chain2", { u = true })
+   act:set_weight("cheap_chain2", 1)
+ 
+   act:add_condition("expensive_direct", { s = true })
+   act:add_reaction("expensive_direct", { u = true })
+   act:set_weight("expensive_direct", 5)
+ 
+   p:set_action_list(act)
+   p:set_heuristic("zero")
+ 
+   local path = p:calculate()
+   local names = {}
+   for i,n in ipairs(path) do names[i] = n.name end
+   assert.same({ "cheap_chain1", "cheap_chain2" }, names)
+ end)
    
 end)
