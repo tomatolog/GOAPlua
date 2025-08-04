@@ -137,32 +137,111 @@ local function apply_reaction(state, reaction)
     return succ_state
 end
 
--- Deterministic lowest f selection with tie-breaking by (f, g, name)
-local function lowest_f_in_open(olist)
-    local best_key, best_node
-    for sk, node in pairs(olist) do
-        if not best_node then
-            best_key, best_node = sk, node
-        else
-            if node.f < best_node.f then
-                best_key, best_node = sk, node
-            elseif node.f == best_node.f then
-                if node.g < best_node.g then
-                    best_key, best_node = sk, node
-                elseif node.g == best_node.g then
-                    local n1 = tostring(node.name or "")
-                    local n2 = tostring(best_node.name or "")
-                    if n1 < n2 then
-                        best_key, best_node = sk, node
-                    end
-                end
-            end
-        end
+-- ============================================================
+-- Open list as a binary heap with decrease-key via index map.
+-- Order by (f, g, name) ascending for deterministic behavior.
+-- ============================================================
+
+local function node_less(a, b)
+    if a.f ~= b.f then
+        return a.f < b.f
     end
-    return best_key, best_node
+    if a.g ~= b.g then
+        return a.g < b.g
+    end
+    local n1 = tostring(a.name or "")
+    local n2 = tostring(b.name or "")
+    return n1 < n2
 end
 
--- Returns true if we should skip pushing/updating this successor.
+local OpenHeap = {}
+OpenHeap.__index = OpenHeap
+
+function OpenHeap.new()
+    return setmetatable({ data = {}, pos = {} }, OpenHeap)
+end
+
+local function heap_swap(h, i, j)
+    local di, dj = h.data[i], h.data[j]
+    h.data[i], h.data[j] = dj, di
+    if di then h.pos[di._sk] = j end
+    if dj then h.pos[dj._sk] = i end
+end
+
+local function heap_up(h, i)
+    while i > 1 do
+        local p = math.floor(i / 2)
+        if node_less(h.data[i], h.data[p]) then
+            heap_swap(h, i, p)
+            i = p
+        else
+            break
+        end
+    end
+end
+
+local function heap_down(h, i)
+    local n = #h.data
+    while true do
+        local l = 2 * i
+        local r = l + 1
+        local smallest = i
+        if l <= n and node_less(h.data[l], h.data[smallest]) then
+            smallest = l
+        end
+        if r <= n and node_less(h.data[r], h.data[smallest]) then
+            smallest = r
+        end
+        if smallest ~= i then
+            heap_swap(h, i, smallest)
+            i = smallest
+        else
+            break
+        end
+    end
+end
+
+function OpenHeap:push(node)
+    -- node must have _sk set
+    local i = #self.data + 1
+    self.data[i] = node
+    self.pos[node._sk] = i
+    heap_up(self, i)
+end
+
+function OpenHeap:pop_min()
+    local n = #self.data
+    if n == 0 then return nil end
+    local min = self.data[1]
+    local last = self.data[n]
+    self.data[n] = nil
+    self.pos[min._sk] = nil
+    if n > 1 then
+        self.data[1] = last
+        self.pos[last._sk] = 1
+        heap_down(self, 1)
+    end
+    return min
+end
+
+function OpenHeap:update(node)
+    -- node must already be in heap
+    local i = self.pos[node._sk]
+    if not i then return end
+    heap_up(self, i)
+    heap_down(self, i)
+end
+
+function OpenHeap:get(sk)
+    local idx = self.pos[sk]
+    if idx then return self.data[idx] end
+    return nil
+end
+
+function OpenHeap:empty()
+    return #self.data == 0
+end
+
 -- Skips when closed has a better or equal g for the same state.
 local function should_skip_successor(succ_state_key, tentative_g, path)
     local closed_node = path.clist[succ_state_key]
@@ -175,25 +254,34 @@ end
 -- Insert or update an entry in open for succ_state. Returns the open node (new or updated).
 local function upsert_open_node(action_name, succ_state, g, parent_id, path)
     local succ_sk = Goap.state_key(succ_state)
-    local open_node = path.olist[succ_sk]
-    local nn = open_node or { id = nil }
-
-    if not nn.id then
+    local open_node = path.open:get(succ_sk)
+    if not open_node then
         path.node_id = path.node_id + 1
-        nn.id = path.node_id
+        local nn = {
+            id = path.node_id,
+            name = tostring(action_name or ""),
+            state = succ_state,
+            _sk = succ_sk,
+            g = g,
+            h = heuristic_value(path.heuristic_strategy, succ_state, path.goal, path.heuristic_ctx),
+            f = 0,
+            p_id = parent_id
+        }
+        nn.f = nn.g + nn.h
+        path.nodes[nn.id] = nn
+        path.open:push(nn)
+        return nn
+    else
+        if g < open_node.g then
+            open_node.g = g
+            open_node.p_id = parent_id
+            open_node.h = heuristic_value(path.heuristic_strategy, open_node.state, path.goal, path.heuristic_ctx)
+            open_node.f = open_node.g + open_node.h
+            path.nodes[open_node.id] = open_node
+            path.open:update(open_node)
+        end
+        return open_node
     end
-
-    nn.name = tostring(action_name or "")
-    nn.state = succ_state
-    nn.g = g
-    nn.h = heuristic_value(path.heuristic_strategy, succ_state, path.goal, path.heuristic_ctx)
-    nn.f = nn.g + nn.h
-    nn.p_id = parent_id
-
-    path.nodes[nn.id] = nn
-    path.olist[succ_sk] = nn
-
-    return nn
 end
 
 -- Expand one action from a node; updates open/closed as needed.
@@ -215,8 +303,8 @@ local function expand_action(node, action_name, path)
         return
     end
 
-    local open_node = path.olist[succ_sk]
-    if not open_node or tentative_g < open_node.g then
+    local existing_open = path.open:get(succ_sk)
+    if not existing_open or tentative_g < existing_open.g then
         upsert_open_node(action_name, succ_state, tentative_g, node.id, path)
     end
 end
@@ -243,7 +331,7 @@ function Goap.astar(start_state, goal_state, actions, reactions, weight_table, h
         reactions =  reactions,
         weight_table =  weight_table,
         action_nodes = {},
-        olist =  {}, -- open: state_key -> node
+        open = OpenHeap.new(), -- heap-based open list
         clist =  {}, -- closed: state_key -> node
         heuristic_strategy = heuristic_strategy or "mismatch",
         heuristic_ctx = {},
@@ -265,9 +353,8 @@ function Goap.astar(start_state, goal_state, actions, reactions, weight_table, h
     _start_node.g = 0
     _start_node.h = heuristic_value(_path.heuristic_strategy, _start_node.state, goal_state, _path.heuristic_ctx)
     _start_node.f = _start_node.g + _start_node.h
-
-    local sk_start = Goap.state_key(_start_node.state)
-    _path.olist[sk_start] = deepcopy(_start_node)
+    _start_node._sk = Goap.state_key(_start_node.state)
+    _path.open:push(_start_node)
 
     -- Cache action condition nodes for applicability checks
     for k,v in pairs(actions) do
@@ -283,14 +370,14 @@ function Goap.astar(start_state, goal_state, actions, reactions, weight_table, h
 
     -- Walk
     while true do
-        if next(_path.olist) == nil then
+        if _path.open:empty() then
             return {}
         end
 
         -- Extract node with lowest f from open (deterministic tie-break)
-        local sk, node = lowest_f_in_open(_path.olist)
-        if not sk then return {} end
-        _path.olist[sk] = nil
+        local node = _path.open:pop_min()
+        if not node then return {} end
+        local sk = node._sk
 
         -- Goal test
         if Goap.conditions_are_met(node.state, _path.goal) then
