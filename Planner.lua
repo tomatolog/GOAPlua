@@ -54,13 +54,21 @@ function Planner:set_action_list(action_list)
     self.action_list = action_list
 end
 
--- New: validate that each action has an explicit, positive numeric weight
-local function validate_weights(action_list)
+-- New: validate that each action has an explicit, positive numeric weight,
+-- and a matching reaction table.
+local function validate_actions_and_weights(action_list)
     if not action_list or not action_list.conditions then
         error("No actions provided to planner")
     end
     local weights = action_list.weights or {}
+    local reactions = action_list.reactions or {}
     for action_name, _ in pairs(action_list.conditions) do
+        -- Validate reaction presence
+        local r = reactions[action_name]
+        if r == nil then
+            error("Missing reaction for action '"..tostring(action_name).."'")
+        end
+        -- Validate weight presence and positivity
         local w = weights[action_name]
         if w == nil then
             error("Missing weight for action '"..tostring(action_name).."'")
@@ -72,8 +80,8 @@ local function validate_weights(action_list)
 end
 
 function Planner:calculate()
-     -- Validate weights before planning
-     validate_weights(self.action_list)
+     -- Validate actions and weights before planning
+     validate_actions_and_weights(self.action_list)
 
      return Goap.astar(
          self.start_state,
