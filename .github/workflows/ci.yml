@@ -19,17 +19,17 @@ jobs:
       - name: Set up Lua
         uses: leafo/gh-actions-lua@v10
         with:
-          luaVersion: "5.4"
-          luarocksVersion: "latest" # Be explicit about installing Luarocks
+          luaVersion: "5.1"
 
-      # Step 3: Install dependencies using separate, atomic steps.
-      # This is the key fix. Each 'run' command executes in a new shell
-      # that correctly inherits the updated PATH from the 'Set up Lua' step.
-      - name: Install Busted
-        run: luarocks install busted
+      - name: Set up Luarocks
+        uses: leafo/gh-actions-luarocks@v4
 
-      - name: Install Penlight
-        run: luarocks install penlight
+      # Step 3: Install dependencies
+      # We install busted and penlight. The `--local` flag is good practice
+      # as it installs them into a user-local directory without needing sudo.
+      # The setup actions will ensure the PATH is configured to find these.
+      - name: Install dependencies
+        run: luarocks install --local busted penlight
 
       # Step 4: Run the tests
       # This step will now be able to find the `busted` executable.
