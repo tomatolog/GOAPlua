@@ -1,45 +1,37 @@
 # .github/workflows/ci.yml
 
-# Name for this workflow
 name: Lua Tests
 
-# Controls when the workflow will run.
-# - on: push -> runs on every push to any branch.
-# - on: pull_request -> runs on every pull request targeting any branch.
 on: [push, pull_request]
 
 jobs:
-  # A single job in this workflow, named "test"
   test:
-    # The type of runner that the job will run on.
-    # 'ubuntu-latest' is a standard, cost-effective choice.
     runs-on: ubuntu-latest
 
-    # A sequence of tasks that will be executed as part of the job
     steps:
       # Step 1: Check out the repository's code
-      # This downloads your code into the runner so the job can access it.
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Step 2: Set up the Lua environment
-      # This action installs a specified version of Lua and Luarocks.
-      # You can change the luaVersion to '5.3', '5.2', 'luajit', etc.
+      # Step 2: Set up Lua and Luarocks
+      # We explicitly request Luarocks to ensure it is installed and its path
+      # is correctly exported for subsequent steps.
       - name: Set up Lua
         uses: leafo/gh-actions-lua@v10
         with:
           luaVersion: "5.4"
+          luarocksVersion: "latest" # Be explicit about installing Luarocks
 
-      # Step 3: Install project dependencies
-      # We need 'busted' for testing and 'penlight' as a project dependency.
-      # Using luarocks is the standard way to manage Lua packages in a CI environment.
-      - name: Install dependencies
-        run: |
-          luarocks install busted
-          luarocks install penlight
+      # Step 3: Install dependencies using separate, atomic steps.
+      # This is the key fix. Each 'run' command executes in a new shell
+      # that correctly inherits the updated PATH from the 'Set up Lua' step.
+      - name: Install Busted
+        run: luarocks install busted
+
+      - name: Install Penlight
+        run: luarocks install penlight
 
       # Step 4: Run the tests
-      # This executes the command you use locally to run all spec files.
-      # The `bootstrap.lua` file, required by your specs, will handle the package path.
+      # This step will now be able to find the `busted` executable.
       - name: Run tests
         run: busted specs/*
