@@ -1,19 +1,15 @@
 -- File: specs/barricade_multi_spec.lua
 -- ------------------------------------------------------------------
---  A Busted spec to test the GOAP planner using the logic from
---  the example_barricade_multi.lua file. It verifies that the
---  planner can find correct and optimal plans for varying numbers
---  of windows.
+--  A Busted spec to test the GOAP planner using the reusable
+--  barricade task module.
 -- ------------------------------------------------------------------
 
 local Planner = require("Planner")
-local Action  = require("Action")
+local BarricadeTask = require("tasks.barricade") -- Import the reusable task actions
 
-describe("Planner with Barricade Multi-Window example", function()
+describe("Planner with Barricade Multi-Window Task", function()
 
-  -- Helper function to set up the world based on the example.
-  -- It creates a planner instance and a corresponding set of actions
-  -- for a given number of windows.
+  -- Helper function to set up the world using the barricade task module.
   local function setup_barricade_world(num_windows)
     -- World definition
     local world = Planner(
@@ -36,50 +32,10 @@ describe("Planner with Barricade Multi-Window example", function()
         windowsRemaining = 0,
     }
 
-    -- Actions
-    local actions = Action()
+    -- Get the actions from our reusable task module
+    local actions = BarricadeTask.create_actions(num_windows)
 
-    -- ensureResources – grab hammer, plank and nails if we don’t have them
-    actions:add_condition('ensureResources', { hasHammer = false })
-    actions:add_reaction ('ensureResources', { hasHammer = true, hasPlank  = true, hasNails  = true })
-    actions:set_weight('ensureResources', 1)
-
-    -- findWindow<N> – pick a concrete window when the counter is N
-    for i = num_windows, 1, -1 do
-        local name = "findWindow" .. i
-        actions:add_condition(name, { windowsRemaining = i, hasTarget = false })
-        actions:add_reaction(name, { hasTarget = true })
-        actions:set_weight(name, 2)
-    end
-
-    -- walkToWindow – move next to the current target
-    actions:add_condition('walkToWindow', { hasTarget = true, nearWindow = false })
-    actions:add_reaction('walkToWindow', { nearWindow = true })
-    actions:set_weight('walkToWindow', 2)
-
-    -- equipTools – put hammer in primary hand, plank in secondary
-    actions:add_condition('equipTools', {
-        hasHammer = true, hasPlank = true, hasNails = true,
-        nearWindow = true, equipped = false
-    })
-    actions:add_reaction('equipTools', { equipped = true })
-    actions:set_weight('equipTools', 1)
-
-    -- barricadeWindow<N> – actually barricade the window and decrement the counter
-    for i = num_windows, 1, -1 do
-        local name = "barricadeWindow" .. i
-        actions:add_condition(name, {
-            windowsRemaining = i, hasTarget = true, nearWindow = true, equipped = true,
-        })
-        actions:add_reaction(name, {
-            hasTarget        = false,
-            nearWindow       = false,
-            windowsRemaining = i - 1,
-        })
-        actions:set_weight(name, 5)
-    end
-
-    -- Return the planner and the actions separately for manipulation in tests
+    -- Return the planner and the actions object for manipulation in tests
     return world, actions
   end
 
@@ -123,10 +79,8 @@ describe("Planner with Barricade Multi-Window example", function()
 
     local plan = planner:calculate()
 
-    -- Assert that a valid plan was found
     assert.is_not_nil(plan)
 
-    -- Assert the exact sequence of actions
     local expected_sequence = {
       "ensureResources",
       "findWindow1",
@@ -141,12 +95,9 @@ describe("Planner with Barricade Multi-Window example", function()
     end
     assert.are.same(expected_sequence, actual_sequence)
 
-    -- Assert the total cost of the plan
     -- 1 + 2 + 2 + 1 + 5 = 11
     local expected_cost = 11
     assert.are.equal(expected_cost, plan[#plan].g)
-
-    -- Assert that the goal state is met
     assert.are.equal(0, plan[#plan].state.windowsRemaining)
   end)
 
@@ -155,8 +106,7 @@ describe("Planner with Barricade Multi-Window example", function()
     local planner, actions = setup_barricade_world(MAX_WINDOWS)
 
     -- Sabotage the plan by removing the action to get resources.
-    -- The start state has hasHammer=false, so without this action,
-    -- the rest of the plan is impossible.
+    -- This tests our ability to manipulate the generated action set.
     actions.conditions.ensureResources = nil
     actions.reactions.ensureResources = nil
     actions.weights.ensureResources = nil
