@@ -25,9 +25,9 @@ local function validate_reaction_table(key, reaction)
         if v == -1 then
             error("Invalid reaction value -1 for action '"..tostring(key).."' at key '"..tostring(k).."'. Reactions must specify concrete values (no -1).")
         end
-        -- Optional: enforce boolean values; comment out if your domain is not strictly boolean.
-        if type(v) ~= "boolean" then
-            error("Invalid reaction value type for action '"..tostring(key).."', key '"..tostring(k).."': expected boolean, got "..type(v))
+        local vt = type(v)
+        if vt ~= "boolean" and vt ~= "number" then
+            error("Invalid reaction value type for action '"..tostring(key).."', key '".. tostring(k).."': expected boolean or number, got "..vt)
         end
     end
 end
