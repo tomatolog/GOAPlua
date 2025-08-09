@@ -1,6 +1,7 @@
 local class = require('pl.class')
 local deepcopy = require('pl.tablex').deepcopy
 local Goap = require("Goap")
+local RPG = require("relaxed_planning_graph")
 
 local Planner = class()
 local function  update(t1,t2)
@@ -80,8 +81,18 @@ local function validate_actions_and_weights(action_list)
 end
 
 function Planner:calculate()
-     -- Validate actions and weights before planning
      validate_actions_and_weights(self.action_list)
+
+     -- Build the Relaxed Planning Graph once before the search begins.
+     local rpg = RPG.build(
+         self.start_state,
+         self.action_list.conditions,
+         self.action_list.reactions
+     )
+
+     -- Pass the RPG into the heuristic context.
+     local heuristic_params = self.heuristic_params or {}
+     heuristic_params.rpg = rpg
 
      return Goap.astar(
          self.start_state,
@@ -90,7 +101,7 @@ function Planner:calculate()
          deepcopy(self.action_list.reactions),
          deepcopy(self.action_list.weights),
          self.heuristic_strategy,
-         self.heuristic_params
+         heuristic_params
      )
 end
 

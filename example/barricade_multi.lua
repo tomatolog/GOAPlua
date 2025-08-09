@@ -50,6 +50,9 @@ local actions = BarricadeTask.create_actions(MAX_WINDOWS)
 -----------------------------------------------------------------
 world:set_action_list(actions)
 
+-- Set the heuristic to use the new RPG 'add' strategy
+world:set_heuristic("rpg_add")
+
 -----------------------------------------------------------------
 --  4️⃣  Run the planner and pretty‑print the result
 -----------------------------------------------------------------

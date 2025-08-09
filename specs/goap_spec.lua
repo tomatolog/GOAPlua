@@ -1,4 +1,5 @@
 local Goap = require("Goap") -- module table
+local utils = require("utils") 
 
 describe("Goap", function()
   it("distance_to_state handles equal states as 0", function()
@@ -28,7 +29,7 @@ describe("Goap", function()
   it("state_key is stable and canonical", function()
     local s = { b=false, a=true }
     local s2 = { a=true, b=false }
-    assert.equals(Goap.state_key(s), Goap.state_key(s2))
+    assert.equals(utils.state_key(s), utils.state_key(s2))
   end)
 
   it("astar finds a path and applies reactions", function()

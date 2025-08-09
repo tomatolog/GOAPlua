@@ -1,4 +1,6 @@
 local deepcopy = require('pl.tablex').deepcopy
+local RPG = require("relaxed_planning_graph")
+local utils = require("utils") 
 
 local Goap = {}
 
@@ -31,25 +33,6 @@ function Goap.conditions_are_met(state_1, state_2)
         end
     end
     return true
-end
-
--- Canonical state key: sorted keys joined as key=value; booleans as 1/0
-function Goap.state_key(state)
-    local keys = {}
-    for k in pairs(state) do table.insert(keys, k) end
-    table.sort(keys, function(a,b) return a < b end)
-    local parts = {}
-    for _,k in ipairs(keys) do
-        local v = state[k]
-        local vs
-        if type(v) == "boolean" then
-            vs = v and "1" or "0"
-        else
-            vs = tostring(v)
-        end
-        table.insert(parts, tostring(k).."="..vs)
-    end
-    return table.concat(parts, ";")
 end
 
 local function create_node(path,state,name)
@@ -91,7 +74,12 @@ local function min_weight(weight_table)
 end
 
 local function heuristic_value(strategy, node_state, goal_mask, ctx)
-    if strategy == "zero" then
+    if strategy == "rpg_add" then
+        return RPG.h_add(ctx.rpg, node_state, goal_mask)
+    -- We can add h_max here later if needed
+    -- elseif strategy == "rpg_max" then
+    --     return RPG.h_max(ctx.rpg, node_state, goal_mask)
+    elseif strategy == "zero" then
         return 0
     elseif strategy == "mismatch" or strategy == nil then
         return mismatch_count(node_state, goal_mask)
@@ -248,7 +236,7 @@ end
 
 -- Insert or update an entry in open for succ_state. Returns the open node (new or updated).
 local function upsert_open_node(action_name, succ_state, g, parent_id, path)
-    local succ_sk = Goap.state_key(succ_state)
+    local succ_sk = utils.state_key(succ_state)
     local open_node = path.open:get(succ_sk)
     if not open_node then
         path.node_id = path.node_id + 1
@@ -290,7 +278,7 @@ local function expand_action(node, action_name, path)
     if successor_is_noop(node.state, reaction) then return end
 
     local succ_state = apply_reaction(node.state, reaction)
-    local succ_sk = Goap.state_key(succ_state)
+    local succ_sk = utils.state_key(succ_state)
     local weight = path.weight_table[action_name] or 1
     local tentative_g = node.g + weight
 
@@ -361,7 +349,7 @@ function Goap.astar(start_state, goal_state, actions, reactions, weight_table, h
     _start_node.g = 0
     _start_node.h = heuristic_value(_path.heuristic_strategy, _start_node.state, goal_state, _path.heuristic_ctx)
     _start_node.f = _start_node.g + _start_node.h
-    _start_node._sk = Goap.state_key(_start_node.state)
+    _start_node._sk = utils.state_key(_start_node.state)
     _path.open:push(_start_node)
 
     -- Cache action condition nodes for applicability checks
