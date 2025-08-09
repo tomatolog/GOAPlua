@@ -16,50 +16,52 @@ function World:calculate()
 		table.insert(self.plans,v:calculate())
 	end 
 end 
-local function sum(plan)
-	local s = 0 
-	for _,v in pairs(plan)  do 
-		s = s + v["g"]
-	end 
-	return s 
-end 
+
 function World:get_plan(debug)
-	local _plans = {}
-	for _,plan in pairs(self.plans) do 
-		local _plan_cost = sum( plan )
-		
-		_plans[_plan_cost] = _plans[_plan_cost] or {}
-		table.insert(_plans[_plan_cost],plan)
-	end 
-	if  debug then 
-		local  i = 1
-        -- stable, sorted iteration by plan_score
-        local keys = {}
-        for k in pairs(_plans) do table.insert(keys, k) end
-        table.sort(keys, function(a,b) return a < b end)
-		for _, plan_score in ipairs(keys) do
-            local plans = _plans[plan_score]
-			for _,plan in pairs(plans) do 
-				print(i)
-				for _,v in pairs(plan) do 
-					print("\t",v["name"])
-				end 
+	local _plans_by_cost = {}
+	for _, plan in pairs(self.plans) do
+        -- A plan might be empty if no path was found
+		if plan and #plan > 0 then
+            -- The total cost of a plan is the 'g' score of the FINAL node.
+			local plan_cost = plan[#plan].g
+			
+			_plans_by_cost[plan_cost] = _plans_by_cost[plan_cost] or {}
+			table.insert(_plans_by_cost[plan_cost], plan)
+        end
+	end
+
+	if debug then
+		local i = 1
+        -- Stable, sorted iteration by plan_cost
+        local costs = {}
+        for k in pairs(_plans_by_cost) do table.insert(costs, k) end
+        table.sort(costs) -- Sort costs numerically ascending
+
+		for _, plan_cost in ipairs(costs) do
+            local plans = _plans_by_cost[plan_cost]
+			for _, plan in pairs(plans) do
+				print(i, " (Total Cost: "..tostring(plan_cost)..")")
+				for _, node in ipairs(plan) do
+					print("\t", node.name, "(g="..node.g..")")
+				end
 				i = i + 1
-				print("\n\tTotal cost",plan_score)
-			end 
-		end 
-	end 
-    -- return the plan(s) with minimal cost deterministically
-    local min_key = nil
-    for k in pairs(_plans) do
-        if min_key == nil or k < min_key then
-            min_key = k
+			end
+		end
+	end
+
+    -- Return the plan(s) with the minimal cost
+    local min_cost = nil
+    for k in pairs(_plans_by_cost) do
+        if min_cost == nil or k < min_cost then
+            min_cost = k
         end
     end
-    if min_key ~= nil then
-        return _plans[min_key]
+
+    if min_cost ~= nil then
+        return _plans_by_cost[min_cost]
     end
-    return nil
+    
+    return nil -- No valid plans found
 end
 
 return World
