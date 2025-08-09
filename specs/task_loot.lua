@@ -1,4 +1,4 @@
--- File: specs/loot_task_spec.lua
+-- File: specs/task_loot.lua
 -- ------------------------------------------------------------------
 --  A Busted spec to test the GOAP planner's ability to use the
 --  actions converted from LootCategoryTask.
@@ -11,18 +11,23 @@ describe("Planner with Loot Task", function()
 
   -- Helper function to set up a world for a looting plan.
   local function setup_loot_world(containers_to_loot)
-    -- World definition
+    -- World definition -- MUST BE COMPLETE
     local world = Planner(
-        "isInside", "hasRoomInBag", "containersToLoot", "hasContainerTarget", "atContainer"
+        "isInside", "hasRoomInBag", "containersToLoot", "hasContainerTarget", "atContainer",
+        "atBuilding", "entryMethod", "hasBreachingTool", "wantsToLoot" -- Add ALL states
     )
 
     -- Start and goal states
     world:set_start_state{
-        isInside = true,         -- We must already be inside a building to loot
+        isInside = true,
         hasRoomInBag = true,
         containersToLoot = containers_to_loot,
         hasContainerTarget = false,
         atContainer = false,
+        atBuilding = true,
+        entryMethod = "door",
+        hasBreachingTool = false,
+        wantsToLoot = true, -- Add missing state
     }
     world:set_goal_state{
         containersToLoot = 0,
@@ -31,7 +36,7 @@ describe("Planner with Loot Task", function()
     local actions = ScavengeTask.create_actions(containers_to_loot)
     return world, actions
   end
-
+  
   it("should find a full plan to loot 2 containers", function()
     local CONTAINERS_TO_LOOT = 2
     local planner, actions = setup_loot_world(CONTAINERS_TO_LOOT)
@@ -41,7 +46,7 @@ describe("Planner with Loot Task", function()
     local plan = planner:calculate()
 
     assert.is_not_nil(plan)
-    assert.is_true(#plan > 0)
+    assert.is_true(#plan > 0, "A plan should have been found") -- This assertion should now pass
 
     -- Assert the exact sequence for looting two containers
     local expected_sequence = {
@@ -68,13 +73,16 @@ describe("Planner with Loot Task", function()
     local CONTAINERS_TO_LOOT = 1
     local planner, actions = setup_loot_world(CONTAINERS_TO_LOOT)
 
-    -- Modify the start state: we are inside and have already spotted a container.
     planner:set_start_state{
         isInside = true,
         hasRoomInBag = true,
         containersToLoot = 1,
-        hasContainerTarget = true, -- We have a target...
-        atContainer = false,       -- ...but aren't next to it yet.
+        hasContainerTarget = true,
+        atContainer = false,
+        atBuilding = true,
+        entryMethod = "door",
+        hasBreachingTool = false,
+        wantsToLoot = true,
     }
     planner:set_action_list(actions)
     planner:set_heuristic("rpg_add")
@@ -82,20 +90,13 @@ describe("Planner with Loot Task", function()
     local plan = planner:calculate()
     assert.is_not_nil(plan)
 
-    -- The plan should skip finding the container
-    local expected_sequence = {
-      "walkToContainer1",
-      "lootContainer1",
-    }
+    local expected_sequence = { "walkToContainer1", "lootContainer1" }
     local actual_sequence = {}
-    for _, node in ipairs(plan) do
-      table.insert(actual_sequence, node.name)
-    end
+    for _, node in ipairs(plan) do table.insert(actual_sequence, node.name) end
     assert.are.same(expected_sequence, actual_sequence)
 
-    -- Cost: walk(2) + loot(4) = 6
     local expected_cost = 6
-    assert.are.equal(expected_cost, plan[#plan].g)
+    assert.are.equal(expected_cost, plan[#plan].g) -- The error was here, this will now pass
   end)
 
   it("should find no plan if the bag is full", function()
@@ -109,6 +110,9 @@ describe("Planner with Loot Task", function()
         containersToLoot = 1,
         hasContainerTarget = false,
         atContainer = false,
+        atBuilding = true,
+        entryMethod = "door",
+        hasBreachingTool = false,
     }
     planner:set_action_list(actions)
     
