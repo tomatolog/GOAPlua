@@ -6,6 +6,7 @@ local goap = require("goap")
 local Planner = goap.Planner
 local Action  = goap.Action
 local tasks   = goap.tasks
+local deepcopy = require("pl.tablex").deepcopy   -- <‑‑ add this
 
 local Debugger = {}
 Debugger.__index = Debugger
@@ -14,6 +15,7 @@ function Debugger:new()
     return setmetatable({
         planner = nil,
         actions = nil,
+        original_goal  = nil,   -- will hold a deep‑copy of the goal
         verbose = 0,
     }, self)
 end
@@ -135,19 +137,47 @@ function Debugger:cmd_set_weight(arg)
     print("Weight updated.")
 end
 
+-----------------------------------------------------------------
+--  HELP command (the REPL looks for cmd_<name>)
+-----------------------------------------------------------------
+function Debugger:cmd_help(_)
+    self:help()
+end
+
+-----------------------------------------------------------------
+--  When the wrapper creates the debugger we give it the planner
+-----------------------------------------------------------------
+-- (the wrapper (run_example.lua) will set dbg.planner and dbg.actions;
+-- after that we store a copy of the goal so we can restore it later)
+function Debugger:set_planner(planner, actions)
+    self.planner = planner
+    self.actions = actions
+    self.original_goal = deepcopy(planner.goal_state)   -- keep a clean copy
+end
+
+-----------------------------------------------------------------
+--  RUN command – restore the original goal before each execution
+-----------------------------------------------------------------
 function Debugger:cmd_run(arg)
     if not self.planner or not self.actions then
         error("You must create a world and add actions first")
     end
+
     self.planner:set_action_list(self.actions)
+
+    -- *** restore the original goal (prevents the “atContainer” pollution) ***
+    self.planner.goal_state = deepcopy(self.original_goal)
+
     if arg == "verbose" then self.planner:set_verbose(1) end
 
     local plan, stats = self.planner:run_debug()
     if not plan or #plan == 0 then
         print("❌ No viable plan")
-        print("Unreachable actions:", table.concat(self.planner:dump_unreachable_actions(), ", "))
+        print("Unreachable actions:",
+              table.concat(self.planner:dump_unreachable_actions(), ", "))
         return
     end
+
     print("\n=== PLAN (total cost = " .. plan[#plan].g .. ") ===")
     for i,node in ipairs(plan) do
         print(string.format("%2d. %-30s (g=%d)", i, node.name, node.g))
@@ -178,6 +208,10 @@ function Debugger:cmd_dump(arg)
     else
         print("unknown dump target")
     end
+end
+
+function Debugger:cmd_help(_)
+    self:help()
 end
 
 function Debugger:run()

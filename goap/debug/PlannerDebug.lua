@@ -17,19 +17,34 @@ local function log(pl, fmt, ...)
     end
 end
 
--- Replace the original calculate() with a debug‑aware version.
-function PlannerDebug:calculate()
-    self:validate()                     -- <‑‑ new validation step
+-- -----------------------------------------------------------------
+-- 2) **run_debug** – the method the REPL expects.
+--    It does exactly the same thing that the debug‑aware
+--    `PlannerDebug:calculate()` does, but returns the extra
+--    statistics table.
+-- -----------------------------------------------------------------
+function PlannerDebug:run_debug()
+    -- validation (same as before)
+    self:validate()
+
+    -- build the relaxed‑planning‑graph once
     local rpg = require("goap.relaxed_planning_graph").build(
         self.start_state,
         self.action_list.conditions,
         self.action_list.reactions)
 
+    -- put the RPG into the heuristic context
     local heuristic_params = self.heuristic_params or {}
     heuristic_params.rpg = rpg
 
-    -- Hook into Goap.astar to get per‑node diagnostics.
+    -----------------------------------------------------------------
+    -- statistics that the REPL will print
+    -----------------------------------------------------------------
     local stats = {expansions = 0, open_max = 0, closed = 0}
+
+    -----------------------------------------------------------------
+    -- a tiny wrapper around Goap.astar so we can measure time
+    -----------------------------------------------------------------
     local wrapped_astar = function(...)
         local start = os.clock()
         local plan = Goap.astar(...)
@@ -38,19 +53,22 @@ function PlannerDebug:calculate()
         return plan, stats
     end
 
-    -- Monkey‑patch the successor expansion function to collect stats.
+    -----------------------------------------------------------------
+    -- monkey‑patch the neighbour‑expansion function to collect stats
+    -----------------------------------------------------------------
     local orig_expand = require("goap.Goap").expand_neighbors
     local function debug_expand(node, path)
         stats.expansions = stats.expansions + 1
         if path.open and #path.open.data > stats.open_max then
             stats.open_max = #path.open.data
         end
-        orig_expand(node, path)   -- call the original
+        orig_expand(node, path)
     end
-
-    -- Temporarily replace the function (local to this call only)
     package.loaded["goap.Goap"].expand_neighbors = debug_expand
 
+    -----------------------------------------------------------------
+    -- run the real search
+    -----------------------------------------------------------------
     local plan, _ = wrapped_astar(
         self.start_state,
         self.goal_state,
@@ -60,14 +78,16 @@ function PlannerDebug:calculate()
         self.heuristic_strategy,
         heuristic_params)
 
-    -- restore original function
+    -----------------------------------------------------------------
+    -- restore the original neighbour function
+    -----------------------------------------------------------------
     package.loaded["goap.Goap"].expand_neighbors = orig_expand
 
     return plan, stats
 end
 
 -- -----------------------------------------------------------------
--- 2) Validation helpers
+-- 3) Validation helpers (unchanged)
 -- -----------------------------------------------------------------
 function PlannerDebug:validate()
     assert(self.start_state, "start state not set")
@@ -112,12 +132,13 @@ function PlannerDebug:validate()
 end
 
 -- -----------------------------------------------------------------
--- 3) Dump helpers
+-- 4) Dump helpers (only `dump_state` needed a tiny fix)
 -- -----------------------------------------------------------------
 local pretty = require("pl.pretty")
 
 function PlannerDebug:dump_state(state)
-    io.write(pretty.state(state) .. "\n")
+    -- `pl.pretty` does not have a `state` function; use `write` instead.
+    io.write(pretty.write(state) .. "\n")
 end
 
 function PlannerDebug:dump_actions()
