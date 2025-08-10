@@ -4,7 +4,7 @@
 --  the entire scavenging process: finding a building, entering
 --  it via multiple methods, and looting containers inside.
 -- --------------------------------------------------------------
-local Action = require("Action")
+local Action = require("goap.Action")
 
 local ScavengeTask = {}
 

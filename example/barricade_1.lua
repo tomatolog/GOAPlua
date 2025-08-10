@@ -16,9 +16,10 @@
 
 require("bootstrap")      -- sets the package.path for the demo
 require("deps")           -- only needed if you vendored Penlight yourself
+local goap = require("goap")
 
-local Planner = require("Planner")
-local Action  = require("Action")
+local Planner = goap.Planner
+local Action  = goap.Action
 
 -----------------------------------------------------------------
 -- 1)  Define the world variables (all booleans – the planner
