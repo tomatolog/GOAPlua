@@ -84,6 +84,14 @@ merge(actions.conditions, barricade_actions.conditions)
 merge(actions.reactions,  barricade_actions.reactions)
 merge(actions.weights,    barricade_actions.weights)
 
+---- extra finishing action ------------------------------------------------
+actions:add_condition('finish', {
+    containersToLoot = 0,
+    windowsRemaining = 0,
+})
+actions:add_reaction('finish', { taskComplete = true })
+actions:set_weight('finish', 1)
+
 -----------------------------------------------------------------
 -- 3️⃣  Configure planner
 -----------------------------------------------------------------
