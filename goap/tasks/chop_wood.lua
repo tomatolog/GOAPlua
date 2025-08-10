@@ -4,7 +4,7 @@
 --  which involves getting an axe, finding a tree, and felling it.
 --  Converted from the original ChopWoodTask.lua logic.
 -- --------------------------------------------------------------
-local Action = require("Action")
+local Action = require("goap.Action")
 
 local ChopWoodTask = {}
 

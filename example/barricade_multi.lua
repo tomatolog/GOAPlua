@@ -7,10 +7,11 @@
 
 require("bootstrap")       -- set the package path for the demo
 require("deps")           -- optional, pulls in Penlight if vendored
+local goap = require("goap")
 
-local Planner = require("Planner")
-local World   = require("World")   -- not used here, but kept for symmetry
-local BarricadeTask = require("tasks.barricade") -- Import the reusable task actions
+local Planner = goap.Planner
+local World   = goap.World   -- not used here, but kept for symmetry
+local BarricadeTask = goap.tasks.barricade -- Import the reusable task actions
 
 -----------------------------------------------------------------
 --  0️⃣  World definition

@@ -1,6 +1,6 @@
-local Planner = require("Planner")
-local World = require("World")
-local Action = require("Action")
+local Planner = require("goap.Planner")
+local World = require("goap.World")
+local Action = require("goap.Action")
 
 describe("World", function()
   it("adds planners and returns lowest-cost plan", function()

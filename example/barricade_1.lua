@@ -16,15 +16,13 @@
 
 require("bootstrap")      -- sets the package.path for the demo
 require("deps")           -- only needed if you vendored Penlight yourself
-
-local Planner = require("Planner")
-local Action  = require("Action")
+local goap = require("goap")
 
 -----------------------------------------------------------------
 -- 1)  Define the world variables (all booleans – the planner
 --     treats missing keys as “don’t‑care”)
 -----------------------------------------------------------------
-local world = Planner(
+local world = goap.Planner(
     'hasHammer',        -- do we already have a hammer?
     'hasPlank',         -- do we already have a plank?
     'hasNails',         -- do we have at least two nails?
@@ -59,7 +57,7 @@ world:set_goal_state{
 -----------------------------------------------------------------
 -- 2)  Declare the six primitive actions.
 -----------------------------------------------------------------
-local actions = Action()
+local actions = goap.Action()
 
 -- ----------------------------------------------------------------
 -- 1) ensureResources

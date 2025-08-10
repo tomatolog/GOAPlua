@@ -1,7 +1,7 @@
 local class = require('pl.class')
 local deepcopy = require('pl.tablex').deepcopy
-local Goap = require("Goap")
-local RPG = require("relaxed_planning_graph")
+local Goap = require("goap.Goap")
+local RPG = require("goap.relaxed_planning_graph")
 
 local Planner = class()
 local function  update(t1,t2)

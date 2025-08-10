@@ -4,7 +4,7 @@
 --  windows" task. This module exports a factory function that
 --  creates the actions for a given number of windows.
 -- --------------------------------------------------------------
-local Action = require("Action")
+local Action = require("goap.Action")
 
 local BarricadeTask = {}
 

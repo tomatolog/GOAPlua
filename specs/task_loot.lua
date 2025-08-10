@@ -4,8 +4,8 @@
 --  actions converted from LootCategoryTask.
 -- ------------------------------------------------------------------
 
-local Planner = require("Planner")
-local ScavengeTask = require("tasks.scavenge") -- Import the task actions
+local Planner = require("goap.Planner")
+local ScavengeTask = require("goap.tasks.scavenge") -- Import the task actions
 
 describe("Planner with Loot Task", function()
 
