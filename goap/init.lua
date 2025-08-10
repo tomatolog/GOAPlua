@@ -85,6 +85,15 @@ goap.Action = ActionImpl
 ---     * `"mismatch"` – simple count of differing key‑values (default)
 ---     * `"zero"`     – Dijkstra (always 0)
 ---     * `"rpg_add"`  – relaxed‑planning‑graph additive heuristic
+---     * `"domain_aware"` – a cheap, domain‑aware estimate:
+---         * Counts how many key‑value pairs differ between the current
+---           state and the goal.
+---         * Divides that number by the *maximum* number of goal
+---           propositions any single action can fix (pre‑computed by the
+---           planner).  The result is an optimistic lower bound on the
+---           number of actions still required.
+---         * The heuristic is cheap (O(#goal)) and works well when action
+---           costs are similar.
 ---   `params` is an optional table forwarded to the heuristic (e.g. the
 ---   pre‑built RPG when using `"rpg_add"`).
 --- @field calculate        fun(self:goap.Planner):table|nil
