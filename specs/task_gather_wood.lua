@@ -4,8 +4,8 @@
 --  gather wood task module.
 -- ------------------------------------------------------------------
 
-local Planner = require("Planner")
-local GatherWoodTask = require("tasks.gather_wood") -- Import the new task actions
+local Planner = require("goap.Planner")
+local GatherWoodTask = require("goap.tasks.gather_wood") -- Import the new task actions
 
 describe("Planner with Gather Wood Task", function()
 

@@ -4,8 +4,8 @@
 --  chop wood task module.
 -- ------------------------------------------------------------------
 
-local Planner = require("Planner")
-local ChopWoodTask = require("tasks.chop_wood") -- Import the new task actions
+local Planner = require("goap.Planner")
+local ChopWoodTask = require("goap.tasks.chop_wood") -- Import the new task actions
 
 describe("Planner with Chop Wood Task", function()
 

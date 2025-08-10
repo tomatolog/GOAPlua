@@ -1,9 +1,10 @@
 require("bootstrap") -- set paths
 require("deps") -- uncomment if you vendor 'pl' and want a fallback
+local goap = require("goap")
 
-local World = require("World")
-local Planner = require("Planner")
-local Action = require("Action")
+local World = goap.World
+local Planner = goap.Planner
+local Action = goap.Action
 local world = Planner('hungry', 'has_food', 'in_kitchen', 'tired', 'in_bed')
 world:set_start_state({hungry=true, has_food=false, in_kitchen=false, tired=true, in_bed=false})
 --world:set_heuristic("zero")

@@ -1,7 +1,7 @@
 local deepcopy = require('pl.tablex').deepcopy
 
-local Planner = require("Planner")
-local Action = require("Action")
+local Planner = require("goap.Planner")
+local Action = require("goap.Action")
 
 describe("Planner", function()
   it("validates start/goal state keys", function()
