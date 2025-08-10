@@ -1,10 +1,8 @@
 -- example/chop_and_barricade.lua
 -- --------------------------------------------------------------
---  Combined “chop‑tree → barricade‑windows” example.
---  1️⃣  Chop wood to produce the required number of logs.
---  2️⃣  Use the same world to barricade three windows.
---  The plan interleaves the two task sets so the NPC first gets the
---  tools, chops, then proceeds to the windows.
+--  Full GOAP example: 3 logs → 3 windows.
+--  The plan now *must* chop the logs because the goal includes
+--  logsNeeded = 0.
 -- --------------------------------------------------------------
 
 require("bootstrap")
@@ -12,56 +10,60 @@ require("deps")
 local goap = require("goap")
 
 local Planner = goap.Planner
-local ChopTask = goap.tasks.chop_wood   -- typo fixed below
-local BarricadeTask = goap.tasks.barricade
+local Action  = goap.Action
 
 -----------------------------------------------------------------
--- 0️⃣  World definition – union of all keys used by both tasks
+-- 0️⃣  World definition – every key that any action may read/write
 -----------------------------------------------------------------
 local world = Planner(
-    -- Chop‑wood keys
-    "logsNeeded", "hasAxe", "axeEquipped", "hasTreeTarget", "atTree", "hasStamina",
-    -- Barricade keys
+    -- chop‑wood keys
+    "logsNeeded", "hasAxe", "axeEquipped", "hasTreeTarget",
+    "atTree", "hasStamina",
+    -- barricade keys
     "hasHammer", "hasPlank", "hasNails", "atBuilding",
-    "windowsRemaining", "hasTarget", "nearWindow", "equipped", "taskComplete"
+    "windowsRemaining", "hasTarget", "nearWindow", "equipped",
+    "taskComplete"
 )
 
 -----------------------------------------------------------------
--- 1️⃣  Starting and goal states
+-- 1️⃣  Start & goal states
 -----------------------------------------------------------------
 world:set_start_state{
-    -- Chop‑wood start
-    logsNeeded     = 3,   -- we need three logs (one per window)
-    hasAxe         = false,
-    axeEquipped    = false,
-    hasTreeTarget  = false,
-    atTree         = false,
-    hasStamina     = true,   -- start with stamina
+    -- chop‑wood start
+    logsNeeded    = 3,
+    hasAxe        = false,
+    axeEquipped   = false,
+    hasTreeTarget = false,
+    atTree        = false,
+    hasStamina    = true,
 
-    -- Barricade start
-    hasHammer      = false,
-    hasPlank       = false,
-    hasNails       = false,
-    atBuilding     = true,    -- already inside the building
+    -- barricade start
+    hasHammer        = false,
+    hasPlank         = false,
+    hasNails         = false,
+    atBuilding       = true,
     windowsRemaining = 3,
-    hasTarget      = false,
-    nearWindow     = false,
-    equipped       = false,
-    taskComplete   = false,
+    hasTarget        = false,
+    nearWindow       = false,
+    equipped         = false,
+    taskComplete     = false,
 }
-
 world:set_goal_state{
-    windowsRemaining = 0,      -- all windows barricaded
-    taskComplete     = true,   -- optional flag for readability
+    windowsRemaining = 0,   -- all windows barricaded
+    taskComplete     = true,
+    logsNeeded       = 0,   -- **new** requirement – we must have cut all logs
 }
 
 -----------------------------------------------------------------
 -- 2️⃣  Build the mixed action set
 -----------------------------------------------------------------
-local chop_actions   = ChopTask.create_actions(3)      -- need 3 logs
-local barricade_actions = BarricadeTask.create_actions(3)
+local ChopTask      = goap.tasks.chop_wood
+local BarricadeTask = goap.tasks.barricade
 
-local actions = goap.Action()
+local chop_actions      = ChopTask.create_actions(3)   -- 3 logs
+local barricade_actions = BarricadeTask.create_actions(3) -- 3 windows
+
+local actions = Action()
 actions.conditions = {}
 actions.reactions  = {}
 actions.weights    = {}
@@ -70,29 +72,44 @@ local function merge(dst, src)
     for k, v in pairs(src) do dst[k] = v end
 end
 
+-- copy chop‑wood tables
 merge(actions.conditions, chop_actions.conditions)
 merge(actions.reactions,  chop_actions.reactions)
 merge(actions.weights,    chop_actions.weights)
 
+-- copy barricade tables
 merge(actions.conditions, barricade_actions.conditions)
 merge(actions.reactions,  barricade_actions.reactions)
 merge(actions.weights,    barricade_actions.weights)
 
 -----------------------------------------------------------------
--- 3️⃣  Wire up planner
+-- 2.5  Add the tiny “finish” action (sets taskComplete = true)
 -----------------------------------------------------------------
-world:set_action_list(actions)
-world:set_heuristic("rpg_add")
+actions:add_condition('markTaskComplete', {
+    windowsRemaining = 0,
+    hasTarget        = false,
+    nearWindow       = false,
+})
+actions:add_reaction('markTaskComplete', {
+    taskComplete = true,
+})
+actions:set_weight('markTaskComplete', 1)   -- cheap final step
 
 -----------------------------------------------------------------
--- 4️⃣  Execute & print the plan
+-- 3️⃣  Wire the planner
+-----------------------------------------------------------------
+world:set_action_list(actions)
+world:set_heuristic("rpg_add")   -- any heuristic works; “rpg_add” is nice
+
+-----------------------------------------------------------------
+-- 4️⃣  Run & print the plan
 -----------------------------------------------------------------
 local t0   = os.clock()
 local plan = world:calculate()
 local took = os.clock() - t0
 
 if not plan or #plan == 0 then
-    print("❌ No plan found – maybe some pre‑conditions are impossible.")
+    print("\n❌ No plan – something is impossible")
 else
     print("\n=== CHOP‑AND‑BARRICADE PLAN (total cost = " .. plan[#plan].g .. ") ===")
     for i, node in ipairs(plan) do

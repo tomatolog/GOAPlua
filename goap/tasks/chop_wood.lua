@@ -4,6 +4,9 @@
 --  which involves getting an axe, finding a tree, and felling it.
 --  Converted from the original ChopWoodTask.lua logic.
 -- --------------------------------------------------------------
+--  Revised chop‑wood task – uses only scalar equality so the planner
+--  can understand the conditions.
+-- --------------------------------------------------------------
 local Action = require("goap.Action")
 
 local ChopWoodTask = {}
@@ -22,8 +25,9 @@ function ChopWoodTask.create_actions(logs_to_create)
     --  Condition: We need logs but don't have an axe.
     --  Effect: We now possess an axe (in our inventory).
     -----------------------------------------------------------------
+    -- 1. findAxe  (no fancy “logsNeeded >= 1” test – we always need an axe)
+    -----------------------------------------------------------------
     actions:add_condition('findAxe', {
-        logsNeeded = { greater_than_or_equal = 1 }, -- A way to say "we need at least one"
         hasAxe = false,
     })
     actions:add_reaction('findAxe', {
@@ -53,8 +57,7 @@ function ChopWoodTask.create_actions(logs_to_create)
     --  Effect: We now have stamina.
     -----------------------------------------------------------------
     actions:add_condition('restToRegainStamina', {
-        logsNeeded = { greater_than_or_equal = 1 },
-        hasStamina = false
+        hasStamina = false,
     })
     actions:add_reaction('restToRegainStamina', {
         hasStamina = true
@@ -72,7 +75,7 @@ function ChopWoodTask.create_actions(logs_to_create)
         -----------------------------------------------------------------
         local find_name = "findTree" .. i
         actions:add_condition(find_name, {
-            logsNeeded = i,
+            logsNeeded    = i,          -- we still need exactly i logs
             axeEquipped = true,
             hasStamina = true,
             hasTreeTarget = false,
@@ -113,7 +116,7 @@ function ChopWoodTask.create_actions(logs_to_create)
             atTree = true,
         })
         actions:add_reaction(chop_name, {
-            logsNeeded = i - 1,
+            logsNeeded    = i - 1,   -- one log produced
             hasTreeTarget = false, -- We need to find a new tree
             atTree = false,
             hasStamina = false, -- Chopping is tiring, must rest again
