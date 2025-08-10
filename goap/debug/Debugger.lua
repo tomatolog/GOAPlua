@@ -220,14 +220,16 @@ function Debugger:run()
         io.write("\ngoap> ")
         local line = io.read()
         if not line then break end
-        local cmd, rest = line:match("^(%S+)%s*(.*)")
-        if cmd == "quit" or cmd == "exit" then break end
-        local fn = self["cmd_"..cmd]
-        if fn then
-            local ok, err = pcall(fn, self, rest)
-            if not ok then print("Error:", err) end
-        else
-            print("unknown command – type 'help'")
+        local cmd, rest = line:match("^%s*(%S+)%s*(.*)")
+        if cmd then
+            if cmd == "quit" or cmd == "exit" then break end
+            local fn = self["cmd_"..cmd]
+            if fn then
+                local ok, err = pcall(fn, self, rest)
+                if not ok then print("Error:", err) end
+            else
+                print("unknown command – type 'help'")
+            end
         end
     end
 end
