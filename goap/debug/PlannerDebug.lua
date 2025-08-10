@@ -94,21 +94,23 @@ function PlannerDebug:validate()
     assert(self.goal_state,  "goal state not set")
     assert(self.action_list, "action list not set")
 
-    -- a) every goal key must be producible
-    for k,_ in pairs(self.goal_state) do
-        local producible = false
-        for a,react in pairs(self.action_list.reactions) do
-            if react[k] ~= nil and react[k] == self.goal_state[k] then
-                producible = true
-                break
+    -- a) every goal key must be producible (skip wild‑cards)
+    for k, goal_val in pairs(self.goal_state) do
+        if goal_val ~= -1 then
+            local producible = false
+            for a,react in pairs(self.action_list.reactions) do
+                if react[k] ~= nil and react[k] == goal_val then
+                    producible = true
+                    break
+                end
+            end
+            if not producible then
+                error(string.format(
+                    "Goal key '%s' cannot be produced by any action", k))
             end
         end
-        if not producible then
-            error(string.format(
-                "Goal key '%s' cannot be produced by any action", k))
-        end
     end
-
+    
     -- b) at least one action applicable from start
     local any = false
     for name,cond in pairs(self.action_list.conditions) do
@@ -145,8 +147,9 @@ function PlannerDebug:dump_actions()
     for name,cond in pairs(self.action_list.conditions) do
         local reac = self.action_list.reactions[name]
         local w    = self.action_list.weights[name] or "?"
+        -- `pl.pretty` does not have a `table` helper – use `write`
         io.write(string.format("[%-30s] w=%s\n  pre: %s\n  eff: %s\n",
-            name, tostring(w), pretty.table(cond), pretty.table(reac)))
+            name, tostring(w), pretty.write(cond), pretty.write(reac)))
     end
 end
 
