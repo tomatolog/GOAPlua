@@ -173,7 +173,7 @@ goap.tasks = {
 --------------------------------------------------------------------
 -- Example snippets
 --------------------------------------------------------------------
----[[ ----------------------------------------------------------------
+--[[ ----------------------------------------------------------------
 --- 1️⃣  Simple “cook‑and‑eat” example
 --- ----------------------------------------------------------------
 local goap = require("goap")
@@ -204,7 +204,7 @@ else
 end
 ]]--
 
----[[ ----------------------------------------------------------------
+--[[ ----------------------------------------------------------------
 --- 2️⃣  Using a reusable task (barricade multiple windows)
 --- ----------------------------------------------------------------
 local goap = require("goap")
@@ -245,7 +245,7 @@ else
 end
 ]]--
 
----[[ ----------------------------------------------------------------
+--[[ ----------------------------------------------------------------
 --- 3️⃣  Combining several planners in a World (different entry methods)
 --- ----------------------------------------------------------------
 local goap = require("goap")
@@ -292,7 +292,7 @@ world:add_planner(pWindow)
 world:calculate()
 local bestPlans = world:get_plan(true)   -- prints debug info
 if bestPlans then
-    print("\n=== Cheapest plan (cost = " .. bestPlans[1][#bestPlans[1]].g .. ") ===")
+    print("\n=== Cheapest plan (cost = " .. bestPlans[1] [ #bestPlans [ 1 ] ] . g .. ") ===")
     for i, node in ipairs(bestPlans[1]) do
         print(i .. ". " .. node.name)
     end
