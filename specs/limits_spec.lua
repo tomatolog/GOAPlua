@@ -1,4 +1,4 @@
-local Goap = require("goap.Goap")
+local Goap = require("09_GOAP/Goap")
 
 describe("Goap limits", function()
   it("stops search when expansion limit is reached (expansion_limit)", function()

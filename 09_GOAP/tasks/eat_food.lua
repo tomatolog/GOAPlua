@@ -3,7 +3,7 @@
 --  Defines a reusable set of actions for the "eat food" task.
 --  Converted from EatFoodTask.lua logic.
 -- --------------------------------------------------------------
-local Action = require("goap.Action")
+local Action = require("09_GOAP/Action")
 
 local EatFoodTask = {}
 

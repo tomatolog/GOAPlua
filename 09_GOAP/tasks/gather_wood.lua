@@ -5,7 +5,7 @@
 --  at a designated location.
 --  Converted from the original GatherWoodTask.lua logic.
 -- --------------------------------------------------------------
-local Action = require("goap.Action")
+local Action = require("09_GOAP/Action")
 
 local GatherWoodTask = {}
 

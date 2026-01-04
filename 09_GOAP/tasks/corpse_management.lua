@@ -3,7 +3,7 @@
 --  Defines a reusable set of actions for the "pile corpses" task.
 --  Converted from PileCorpsesTask.lua logic.
 -- --------------------------------------------------------------
-local Action = require("goap.Action")
+local Action = require("09_GOAP/Action")
 
 local CorpseManagementTask = {}
 

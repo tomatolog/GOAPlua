@@ -4,7 +4,7 @@
 --  1. Fleeing from danger
 --  Converted from FleeTask.lua logic.
 -- --------------------------------------------------------------
-local Action = require("goap.Action")
+local Action = require("09_GOAP/Action")
 
 local SafetyTask = {}
 

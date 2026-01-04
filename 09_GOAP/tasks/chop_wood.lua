@@ -7,7 +7,7 @@
 --  Revised chop‑wood task – uses only scalar equality so the planner
 --  can understand the conditions.
 -- --------------------------------------------------------------
-local Action = require("goap.Action")
+local Action = require("09_GOAP/Action")
 
 local ChopWoodTask = {}
 

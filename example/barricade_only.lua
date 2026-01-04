@@ -4,9 +4,7 @@
 --  It shows the missing finish‑action problem and how to fix it.
 -- --------------------------------------------------------------
 
-require("bootstrap")   -- whatever your environment needs
-require("deps")
-local goap = require("goap")
+local goap = require("09_GOAP/01_init")
 
 local Planner = goap.Planner
 local Action  = goap.Action

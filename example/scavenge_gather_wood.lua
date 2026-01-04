@@ -8,9 +8,7 @@
 --  behaviour for a Zomboid survivor.
 -- --------------------------------------------------------------
 
-require("bootstrap")   -- set package.path for the demo
-require("deps")        -- optional: bring in Penlight if vendored locally
-local goap = require("goap")
+local goap = require("09_GOAP/01_init")
 
 local Planner = goap.Planner
 local World   = goap.World

@@ -1,5 +1,6 @@
-local deepcopy = require('pl.tablex').deepcopy
-local utils = require("goap.utils")
+local pl = require('09_GOAP/00_pl')
+local deepcopy = pl.tablex.deepcopy
+local utils = require("09_GOAP/utils")
 
 local RPG = {}
 

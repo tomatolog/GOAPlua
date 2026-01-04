@@ -1,4 +1,4 @@
-local Action = require("goap.Action")
+local Action = require("09_GOAP/Action")
 
 describe("Action", function()
   it("adds conditions and reactions; weight must be set explicitly", function()

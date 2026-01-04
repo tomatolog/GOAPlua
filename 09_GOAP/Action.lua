@@ -1,4 +1,5 @@
-local class = require('pl.class')
+local pl = require('09_GOAP/00_pl')
+local class = pl.class
 local Action = class()
 function Action:_init()
     self.conditions = {}

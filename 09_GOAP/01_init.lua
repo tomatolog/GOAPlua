@@ -22,10 +22,10 @@
 --------------------------------------------------------------------
 -- Helper: short alias for the internal modules.
 --------------------------------------------------------------------
-local ActionImpl   = require("goap.Action")   -- class that stores conditions / reactions / weights
-local PlannerImpl  = require("goap.Planner")  -- class that configures a single GOAP problem
-local WorldImpl    = require("goap.World")    -- manager for many planners
-local GoapImpl     = require("goap.Goap")     -- low‑level helpers (distance, astar, etc.)
+local ActionImpl   = require("09_GOAP/Action")   -- class that stores conditions / reactions / weights
+local PlannerImpl  = require("09_GOAP/Planner")  -- class that configures a single GOAP problem
+local WorldImpl    = require("09_GOAP/World")    -- manager for many planners
+local GoapImpl     = require("09_GOAP/Goap")     -- low‑level helpers (distance, astar, etc.)
 
 --------------------------------------------------------------------
 -- Export table – everything that `require("goap")` will return.
@@ -164,10 +164,10 @@ goap.Goap = GoapImpl
 --- The return type of each factory is `goap.Action`, ready to be passed
 --- to a Planner via `Planner:set_action_list()`.
 goap.tasks = {
-    barricade   = require("goap.tasks.barricade"),
-    chop_wood   = require("goap.tasks.chop_wood"),
-    gather_wood = require("goap.tasks.gather_wood"),
-    scavenge    = require("goap.tasks.scavenge"),
+    barricade   = require("09_GOAP/tasks/barricade"),
+    chop_wood   = require("09_GOAP/tasks/chop_wood"),
+    gather_wood = require("09_GOAP/tasks/gather_wood"),
+    scavenge    = require("09_GOAP/tasks/scavenge"),
 }
 
 --------------------------------------------------------------------

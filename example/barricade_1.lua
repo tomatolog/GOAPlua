@@ -14,9 +14,7 @@
 --       barricadeWindow action already marks the job done)
 -- ---------------------------------------------------------------
 
-require("bootstrap")      -- sets the package.path for the demo
-require("deps")           -- only needed if you vendored Penlight yourself
-local goap = require("goap")
+local goap = require("09_GOAP/01_init")
 
 -----------------------------------------------------------------
 -- 1)  Define the world variables (all booleans – the planner

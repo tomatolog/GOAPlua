@@ -1,18 +1,11 @@
-local class = require('pl.class')
-local deepcopy = require('pl.tablex').deepcopy
-local Goap = require("goap.Goap")
-local RPG = require("goap.relaxed_planning_graph")
+local pl = require('09_GOAP/00_pl')
+local class = pl.class
+local deepcopy = pl.tablex.deepcopy
+local Goap = require("09_GOAP/Goap")
+local RPG = require("09_GOAP/relaxed_planning_graph")
 
--- debug
-local PlannerDebug = require("goap.debug.PlannerDebug")
-local RPGDebug = require("goap.debug.RPGDebug")
 
 local Planner = class()
--- debug
-for k,v in pairs(PlannerDebug) do
-    Planner[k] = v          -- shallow mix‑in
-end
-Planner.dump_rpg = RPGDebug.dump_rpg   -- static method, receives the RPG object
 
 local function  update(t1,t2)
     for k,v in pairs(t2) do

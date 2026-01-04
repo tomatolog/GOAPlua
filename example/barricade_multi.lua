@@ -5,9 +5,7 @@
 --  arbitrary number of windows (controlled by MAX_WINDOWS).
 -- --------------------------------------------------------------
 
-require("bootstrap")       -- set the package path for the demo
-require("deps")           -- optional, pulls in Penlight if vendored
-local goap = require("goap")
+local goap = require("09_GOAP/01_init")
 
 local Planner = goap.Planner
 local World   = goap.World   -- not used here, but kept for symmetry

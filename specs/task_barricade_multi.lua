@@ -4,8 +4,8 @@
 --  barricade task module.
 -- ------------------------------------------------------------------
 
-local Planner = require("goap.Planner")
-local BarricadeTask = require("goap.tasks.barricade") -- Import the reusable task actions
+local Planner = require("09_GOAP/Planner")
+local BarricadeTask = require("09_GOAP/tasks.barricade") -- Import the reusable task actions
 
 describe("Planner with Barricade Multi-Window Task", function()
 

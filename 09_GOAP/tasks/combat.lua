@@ -5,7 +5,7 @@
 --  2. Pursuing targets (moving into range/visibility)
 --  3. Engaging targets (attacking)
 -- --------------------------------------------------------------
-local Action = require("goap.Action")
+local Action = require("09_GOAP/Action")
 
 local CombatTask = {}
 

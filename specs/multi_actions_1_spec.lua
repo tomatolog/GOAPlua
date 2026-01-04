@@ -5,14 +5,14 @@
 --  Goal: Eat food, plant crops, and eliminate a threat.
 -- ------------------------------------------------------------------
 
-local Planner = require("goap.Planner")
-local Action = require("goap.Action")
+local Planner = require("09_GOAP/Planner")
+local Action = require("09_GOAP/Action")
 
 -- Import task factories
-local ScavengeTask = require("goap.tasks.scavenge")
-local EatFoodTask = require("goap.tasks.eat_food")
-local FarmingTask = require("goap.tasks.farming")
-local CombatTask = require("goap.tasks.combat")
+local ScavengeTask = require("09_GOAP/tasks.scavenge")
+local EatFoodTask = require("09_GOAP/tasks.eat_food")
+local FarmingTask = require("09_GOAP/tasks.farming")
+local CombatTask = require("09_GOAP/tasks.combat")
 
 describe("Complex Multi-Action Planner", function()
 

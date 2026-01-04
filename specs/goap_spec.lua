@@ -1,5 +1,5 @@
-local Goap = require("goap.Goap") -- module table
-local utils = require("goap.utils") 
+local Goap = require("09_GOAP/Goap") -- module table
+local utils = require("09_GOAP/utils") 
 
 describe("Goap", function()
   it("distance_to_state handles equal states as 0", function()

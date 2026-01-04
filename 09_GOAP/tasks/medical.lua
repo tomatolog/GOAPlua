@@ -4,7 +4,7 @@
 --  1. Self-care (First Aid)
 --  2. Doctor (Treating others)
 -- --------------------------------------------------------------
-local Action = require("goap.Action")
+local Action = require("09_GOAP/Action")
 
 local MedicalTask = {}
 

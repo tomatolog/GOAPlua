@@ -3,8 +3,8 @@
 --  A Busted spec to test the GOAP planner with EatFoodTask actions.
 -- ------------------------------------------------------------------
 
-local Planner = require("goap.Planner")
-local EatFoodTask = require("goap.tasks.eat_food")
+local Planner = require("09_GOAP/Planner")
+local EatFoodTask = require("09_GOAP/tasks.eat_food")
 
 describe("Planner with Eat Food Task", function()
 

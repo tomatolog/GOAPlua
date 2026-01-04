@@ -3,8 +3,8 @@
 --  A Busted spec to test the GOAP planner with CombatTask actions.
 -- ------------------------------------------------------------------
 
-local Planner = require("goap.Planner")
-local CombatTask = require("goap.tasks.combat")
+local Planner = require("09_GOAP/Planner")
+local CombatTask = require("09_GOAP/tasks.combat")
 
 describe("Planner with Combat Task", function()
 

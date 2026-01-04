@@ -4,8 +4,8 @@
 --  different methods for entering a building.
 -- ------------------------------------------------------------------
 
-local Planner = require("goap.Planner")
-local ScavengeTask = require("goap.tasks.scavenge") -- Import the task actions
+local Planner = require("09_GOAP/Planner")
+local ScavengeTask = require("09_GOAP/tasks.scavenge") -- Import the task actions
 
 describe("Planner with Attempt Entry Into Building Task", function()
 

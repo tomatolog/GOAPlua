@@ -7,9 +7,7 @@
 --  into a single coherent GOAP plan.
 -- --------------------------------------------------------------
 
-require("bootstrap")
-require("deps")
-local goap = require("goap")
+local goap = require("09_GOAP/01_init")
 
 local Planner = goap.Planner
 local ScavengeTask = goap.tasks.scavenge

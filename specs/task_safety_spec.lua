@@ -3,8 +3,8 @@
 --  A Busted spec to test the GOAP planner with SafetyTask actions.
 -- ------------------------------------------------------------------
 
-local Planner = require("goap.Planner")
-local SafetyTask = require("goap.tasks.safety")
+local Planner = require("09_GOAP/Planner")
+local SafetyTask = require("09_GOAP/tasks.safety")
 
 describe("Planner with Safety Task", function()
 

@@ -1,6 +1,4 @@
-require("bootstrap") -- set paths
-require("deps") -- uncomment if you vendor 'pl' and want a fallback
-local goap = require("goap")
+local goap = require("09_GOAP/01_init")
 
 local World = goap.World
 local Planner = goap.Planner

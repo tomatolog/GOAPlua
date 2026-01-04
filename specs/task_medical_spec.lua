@@ -3,8 +3,8 @@
 --  A Busted spec to test the GOAP planner with MedicalTask actions.
 -- ------------------------------------------------------------------
 
-local Planner = require("goap.Planner")
-local MedicalTask = require("goap.tasks.medical")
+local Planner = require("09_GOAP/Planner")
+local MedicalTask = require("09_GOAP/tasks.medical")
 
 describe("Planner with Medical Task", function()
 

@@ -5,9 +5,7 @@
 --  logsNeeded = 0.
 -- --------------------------------------------------------------
 
-require("bootstrap")
-require("deps")
-local goap = require("goap")
+local goap = require("09_GOAP/01_init")
 
 local Planner = goap.Planner
 local Action  = goap.Action

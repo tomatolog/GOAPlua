@@ -3,8 +3,8 @@
 --  A Busted spec to test the GOAP planner with FarmingTask actions.
 -- ------------------------------------------------------------------
 
-local Planner = require("goap.Planner")
-local FarmingTask = require("goap.tasks.farming")
+local Planner = require("09_GOAP/Planner")
+local FarmingTask = require("09_GOAP/tasks.farming")
 
 describe("Planner with Farming Task", function()
 

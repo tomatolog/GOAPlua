@@ -3,8 +3,8 @@
 --  A Busted spec to test the GOAP planner with CorpseManagementTask actions.
 -- ------------------------------------------------------------------
 
-local Planner = require("goap.Planner")
-local CorpseTask = require("goap.tasks.corpse_management")
+local Planner = require("09_GOAP/Planner")
+local CorpseTask = require("09_GOAP/tasks.corpse_management")
 
 describe("Planner with Corpse Management Task", function()
 

@@ -1,5 +1,5 @@
-local RPG = require("goap.relaxed_planning_graph")
-local Action = require("goap.Action")
+local RPG = require("09_GOAP/relaxed_planning_graph")
+local Action = require("09_GOAP/Action")
 
 describe("Relaxed Planning Graph (RPG)", function()
     -- A simple crafting scenario: get wood, get ore, make tool
