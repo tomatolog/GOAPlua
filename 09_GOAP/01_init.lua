@@ -166,7 +166,13 @@ goap.Goap = GoapImpl
 goap.tasks = {
     barricade   = require("09_GOAP/tasks/barricade"),
     chop_wood   = require("09_GOAP/tasks/chop_wood"),
+    combat   = require("09_GOAP/tasks/combat"),
+    corpse_management   = require("09_GOAP/tasks/corpse_management"),
+    eat_food = require("09_GOAP/tasks/eat_food"),
+    farming = require("09_GOAP/tasks/farming"),
     gather_wood = require("09_GOAP/tasks/gather_wood"),
+    medical = require("09_GOAP/tasks/medical"),
+    safety = require("09_GOAP/tasks/safety"),
     scavenge    = require("09_GOAP/tasks/scavenge"),
 }
 
