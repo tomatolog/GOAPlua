@@ -19,7 +19,7 @@ function BarricadeTask.create_actions(num_windows)
     -----------------------------------------------------------------
     --  ensureResources – grab hammer, plank and nails if we don’t have them
     -----------------------------------------------------------------
-    actions:add_condition('ensureResources', { hasHammer = false })
+    actions:add_condition('ensureResources', {})
     actions:add_reaction ('ensureResources', {
         hasHammer = true,
         hasPlank  = true,

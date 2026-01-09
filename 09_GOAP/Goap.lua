@@ -368,15 +368,15 @@ function Goap.astar(start_state, goal_state, actions, reactions, weight_table, h
     -- Walk
     while true do
         if _path.open:empty() then
-            return {}
+            return nil
         end
 
         -- Limits: time and expansions
         if time_exceeded() then
-            return {}
+            return nil
         end
         if max_expansions and _path.expansions >= max_expansions then
-            return {}
+            return nil
         end
 
         -- Extract node with lowest f from open (deterministic tie-break)
