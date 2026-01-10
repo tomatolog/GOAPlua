@@ -23,7 +23,7 @@ describe("Goap limits", function()
     local path = Goap.astar(start, goal, actions, reactions, weights, nil, nil, {
       max_expansions = 5
     })
-    assert.same({}, path)
+    assert.is_nil(path)
   end)
   
   it("stops search when expansion limit is reached (broad branching, many actions)", function()
@@ -69,6 +69,6 @@ describe("Goap limits", function()
     local path = Goap.astar(start, goal, actions, reactions, weights, nil, nil, {
       max_expansions = 10
     })
-    assert.same({}, path)
+    assert.is_nil(path)
   end)
 end)

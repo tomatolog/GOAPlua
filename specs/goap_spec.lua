@@ -86,7 +86,7 @@ describe("Goap", function()
     }
     local weights = { x = 1 }
     local path = Goap.astar(start, goal, actions, reactions, weights)
-    assert.same({}, path)
+    assert.is_nil(path)
   end)
   
  it("expands actions in deterministic name order when costs tie", function()
@@ -150,7 +150,7 @@ describe("Goap", function()
    local reactions = { noop = { a = true } } -- no change
    local weights = { noop = 1 }
    local path = Goap.astar(start, goal, actions, reactions, weights)
-   assert.same({}, path)
+   assert.is_nil(path)
  end)
   
 end)

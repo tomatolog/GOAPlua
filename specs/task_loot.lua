@@ -118,8 +118,7 @@ describe("Planner with Loot Task", function()
     
     local plan = planner:calculate()
     
-    assert.is_not_nil(plan)
-    assert.are.equal(0, #plan, "Expected no plan when bag is full")
+    assert.is_nil(plan, "Expected no plan when bag is full")
   end)
 
 end)

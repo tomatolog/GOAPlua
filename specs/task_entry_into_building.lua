@@ -127,8 +127,7 @@ describe("Planner with Attempt Entry Into Building Task", function()
     planner:set_action_list(actions)
     local plan = planner:calculate()
     
-    assert.is_not_nil(plan)
-    assert.are.equal(0, #plan, "Expected no plan when trying to breach without a tool")
+    assert.is_nil(plan, "Expected no plan when trying to breach without a tool")
   end)
 
 end)

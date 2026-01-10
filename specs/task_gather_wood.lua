@@ -120,9 +120,8 @@ describe("Planner with Gather Wood Task", function()
     planner:set_action_list(actions)
     local plan = planner:calculate()
 
-    -- The planner should return an empty table to indicate no plan was found.
-    assert.is_not_nil(plan)
-    assert.are.equal(0, #plan)
+    -- The planner should return nil to indicate no plan was found.
+    assert.is_nil(plan)
   end)
 
 end)

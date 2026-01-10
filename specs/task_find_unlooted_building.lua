@@ -117,7 +117,6 @@ describe("Planner with Find Unlooted Building Task", function()
     actions.weights.findUnlootedBuilding = nil
     planner:set_action_list(actions)
     local plan = planner:calculate()
-    assert.is_not_nil(plan)
-    assert.are.equal(0, #plan)
+    assert.is_nil(plan)
   end)
 end)
