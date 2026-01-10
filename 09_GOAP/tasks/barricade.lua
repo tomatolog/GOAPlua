@@ -91,4 +91,81 @@ function BarricadeTask.create_actions(num_windows)
     return actions
 end
 
+-- Factory function for the "Iterative" strategy (Barricade All).
+-- Instead of counting down N windows, it assumes a loop:
+-- "Find Window" -> "Barricade It" -> (Optimistically) "Building Secured"
+-- The Executor is responsible for verifying "Building Secured" and re-planning if false.
+function BarricadeTask.create_iterative_actions()
+    local actions = Action()
+
+    -----------------------------------------------------------------
+    --  ensureResources
+    -----------------------------------------------------------------
+    actions:add_condition('ensureResources', {})
+    actions:add_reaction ('ensureResources', {
+        hasHammer = true,
+        hasPlank  = true,
+        hasNails  = true,
+    })
+    actions:set_weight('ensureResources', 1)
+
+    -----------------------------------------------------------------
+    --  findWindow
+    -----------------------------------------------------------------
+    actions:add_condition('findWindow', {
+        is_building_secured = false,
+        hasTarget           = false,
+    })
+    actions:add_reaction('findWindow', {
+        hasTarget = true,
+    })
+    actions:set_weight('findWindow', 2)
+
+    -----------------------------------------------------------------
+    --  walkToWindow
+    -----------------------------------------------------------------
+    actions:add_condition('walkToWindow', {
+        hasTarget  = true,
+        nearWindow = false,
+    })
+    actions:add_reaction('walkToWindow', {
+        nearWindow = true,
+    })
+    actions:set_weight('walkToWindow', 2)
+
+    -----------------------------------------------------------------
+    --  equipTools
+    -----------------------------------------------------------------
+    actions:add_condition('equipTools', {
+        hasHammer  = true,
+        hasPlank   = true,
+        hasNails   = true,
+        nearWindow = true,
+        equipped   = false,
+    })
+    actions:add_reaction('equipTools', {
+        equipped = true,
+    })
+    actions:set_weight('equipTools', 1)
+
+    -----------------------------------------------------------------
+    --  barricadeWindow
+    -----------------------------------------------------------------
+    actions:add_condition('barricadeWindow', {
+        hasTarget   = true,
+        nearWindow  = true,
+        equipped    = true,
+    })
+    actions:add_reaction('barricadeWindow', {
+        hasTarget           = false,
+        nearWindow          = false,
+        -- Optimistic: We assume doing this secures the building (or satisfies the current plan step).
+        -- The Executor loop will reset this to false if more windows exist.
+        is_building_secured = true, 
+    })
+    actions:set_weight('barricadeWindow', 5)
+
+    return actions
+end
+
 return BarricadeTask
