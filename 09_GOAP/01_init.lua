@@ -170,6 +170,7 @@ goap.tasks = {
     corpse_management   = require("09_GOAP/tasks/corpse_management"),
     eat_food = require("09_GOAP/tasks/eat_food"),
     farming = require("09_GOAP/tasks/farming"),
+    find_item = require("09_GOAP/tasks/find_item"),
     gather_wood = require("09_GOAP/tasks/gather_wood"),
     medical = require("09_GOAP/tasks/medical"),
     safety = require("09_GOAP/tasks/safety"),
